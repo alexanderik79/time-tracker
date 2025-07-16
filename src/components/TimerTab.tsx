@@ -93,7 +93,6 @@ const TimerTab: React.FC = () => {
       {categories.length === 0 && <p style={{ color: '#f1f1f1' }}>Нет категорий. Добавьте в вкладке "Категории".</p>}
       {selectedCategory && (
         <CategoryItem>
-          {/* <CategoryName>{selectedCategory.name}</CategoryName> */}
           <div>
             {!selectedCategory.running && !selectedCategory.paused ? (
               <StartButton onClick={handleStart}>

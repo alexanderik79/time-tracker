@@ -5,11 +5,11 @@ import type { RootState } from '../../store';
 interface Category {
   id: string;
   name: string;
-  time: number; // В секундах
+  time: number;
   running: boolean;
   paused: boolean;
-  startTime: number | null; // Время последнего старта (для паузы/возобновления)
-  sessionStartTime: number | null; // Время начала сессии (для отчёта)
+  startTime: number | null;
+  sessionStartTime: number | null;
 }
 
 interface Report {
@@ -17,7 +17,7 @@ interface Report {
   categoryName: string;
   startTime: number;
   endTime: number;
-  duration: number; // В секундах
+  duration: number;
 }
 
 interface TimeTrackerState {
@@ -101,29 +101,6 @@ const categorySlice = createSlice({
       state.lastSelectedCategory = action.payload;
       saveToLocalStorage(state);
     },
-    pauseTimer: (state, action: PayloadAction<string>) => {
-      state.categories = state.categories || [];
-      const category = state.categories.find(cat => cat.id === action.payload);
-      if (category && category.running && category.startTime) {
-        const elapsed = Date.now() - category.startTime;
-        category.time += Math.floor(elapsed / 1000);
-        category.running = false;
-        category.paused = true;
-        category.startTime = null;
-      }
-      saveToLocalStorage(state);
-    },
-    resumeTimer: (state, action: PayloadAction<string>) => {
-      state.categories = state.categories || [];
-      state.categories = state.categories.map(cat => {
-        if (cat.id === action.payload && cat.paused) {
-          return { ...cat, running: true, paused: false, startTime: Date.now() };
-        }
-        return cat;
-      });
-      state.lastSelectedCategory = action.payload;
-      saveToLocalStorage(state);
-    },
     stopTimer: (state, action: PayloadAction<string>) => {
       state.categories = state.categories || [];
       const category = state.categories.find(cat => cat.id === action.payload);
@@ -176,10 +153,15 @@ const categorySlice = createSlice({
       state.lastSelectedCategory = action.payload;
       saveToLocalStorage(state);
     },
+    deleteReport: (state, action: PayloadAction<number>) => {
+      state.reports = state.reports || [];
+      state.reports = state.reports.filter((_, index) => index !== action.payload);
+      saveToLocalStorage(state);
+    },
   },
 });
 
-export const { addCategory, deleteCategory, clearAll, startTimer, pauseTimer, resumeTimer, stopTimer, updateTime, syncTime, selectCategory } = categorySlice.actions;
+export const { addCategory, deleteCategory, clearAll, startTimer, stopTimer, updateTime, syncTime, selectCategory, deleteReport } = categorySlice.actions;
 export const selectCategories = (state: RootState) => state.timeTracker.categories;
 export const selectLastCategory = (state: RootState) => state.timeTracker.lastSelectedCategory;
 export const selectReports = (state: RootState) => state.timeTracker.reports;

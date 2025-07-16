@@ -60,12 +60,6 @@ export const ResumeButton = styled(Button)`
   margin-top: 12px;
 `;
 
-/* export const PauseButton = styled(Button)`
-  background-color: ${colors.textSecondary};
-  color: ${colors.text};
-  margin-top: 12px;
-`; */
-
 export const StartButton = styled(Button)`
   width: 160px;
   height: 160px;
