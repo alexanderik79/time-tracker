@@ -57,11 +57,12 @@ export const Select = styled.select`
   background-color: ${colors.card};
   color: ${colors.text};
   width: 100%;
-  max-width: 250px;
+  max-width: 150px;
 
   @media (max-width: 600px) {
     font-size: 0.8rem;
     padding: 6px;
+    max-width: 100px;
   }
 `;
 
@@ -125,4 +126,11 @@ export const StatsContainer = styled.div`
   @media (max-width: 600px) {
     display: flex;
   }
+`;
+
+export const FilterContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 `;

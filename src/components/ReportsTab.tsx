@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../store';
 import { deleteReport } from '../features/timeTracker/CategorySlice';
-import { ReportContainer, ReportTable, ReportRow, ReportCell, TotalRow, TotalCell, NoReports, Select, DeleteButton, ReportCard, ReportCardItem, StatsContainer } from '../styles/ReportsTabStyles';
+import { ReportContainer, ReportTable, ReportRow, ReportCell, TotalRow, TotalCell, NoReports, Select, DeleteButton, ReportCard, ReportCardItem, StatsContainer, FilterContainer } from '../styles/ReportsTabStyles';
 
 const formatTime = (seconds: number): string => {
   const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -31,17 +31,18 @@ const getWeekStart = (date: Date): Date => {
   return d;
 };
 
-const getMonthStart = (date: Date): Date => {
-  const d = new Date(date);
-  d.setDate(1);
-  d.setHours(0, 0, 0, 0);
-  return d;
-};
-
 const getYearStart = (date: Date): Date => {
   const d = new Date(date);
   d.setMonth(0, 1);
   d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const getMonthEnd = (date: Date): Date => {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + 1);
+  d.setDate(0);
+  d.setHours(23, 59, 59, 999);
   return d;
 };
 
@@ -50,25 +51,33 @@ const ReportsTab: React.FC = () => {
   const reports = useSelector((state: RootState) => state.timeTracker.reports || []);
   const categories = useSelector((state: RootState) => state.timeTracker.categories || []);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState<string>(now.getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>((now.getMonth() + 1).toString().padStart(2, '0'));
 
-  const filteredReports = selectedCategoryId === 'all'
-    ? reports
-    : reports.filter(report => report.categoryId === selectedCategoryId);
+  const years = Array.from({ length: 10 }, (_, i) => (now.getFullYear() - 5 + i).toString());
+  const months = [
+    '01', '02', '03', '04', '05', '06',
+    '07', '08', '09', '10', '11', '12'
+  ];
+
+  const monthStart = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, 1, 0, 0, 0, 0).getTime();
+  const monthEnd = getMonthEnd(new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)).getTime();
+
+  const filteredReports = reports
+    .filter(report => selectedCategoryId === 'all' || report.categoryId === selectedCategoryId)
+    .filter(report => report.startTime >= monthStart && report.startTime <= monthEnd);
 
   const totalTime = filteredReports.reduce((sum, report) => sum + report.duration, 0);
 
-  const now = new Date();
   const weekStart = getWeekStart(now).getTime();
-  const monthStart = getMonthStart(now).getTime();
-  const yearStart = getYearStart(now).getTime();
+  const yearStart = getYearStart(new Date(parseInt(selectedYear))).getTime();
 
   const weekTime = filteredReports
     .filter(report => report.startTime >= weekStart)
     .reduce((sum, report) => sum + report.duration, 0);
 
-  const monthTime = filteredReports
-    .filter(report => report.startTime >= monthStart)
-    .reduce((sum, report) => sum + report.duration, 0);
+  const monthTime = filteredReports.reduce((sum, report) => sum + report.duration, 0);
 
   const yearTime = filteredReports
     .filter(report => report.startTime >= yearStart)
@@ -95,19 +104,37 @@ const ReportsTab: React.FC = () => {
 
   return (
     <ReportContainer>
-      <Select
-        value={selectedCategoryId}
-        onChange={(e) => setSelectedCategoryId(e.target.value)}
-      >
-        <option value="all">Все</option>
-        {categories.map(category => (
-          <option key={category.id} value={category.id}>
-            {category.name}
-          </option>
-        ))}
-      </Select>
+      <FilterContainer>
+        <Select
+          value={selectedCategoryId}
+          onChange={(e) => setSelectedCategoryId(e.target.value)}
+        >
+          <option value="all">Все</option>
+          {categories.map(category => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </Select>
+        <Select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(e.target.value)}
+        >
+          {years.map(year => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </Select>
+        <Select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+        >
+          {months.map(month => (
+            <option key={month} value={month}>{month}</option>
+          ))}
+        </Select>
+      </FilterContainer>
       {filteredReports.length === 0 ? (
-        <NoReports>Нет отчётов</NoReports>
+        <NoReports>Нет отчётов за выбранный период</NoReports>
       ) : (
         <>
           <div className="mobile-reports">
