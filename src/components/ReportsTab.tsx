@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../store';
 import { deleteReport } from '../features/timeTracker/CategorySlice';
-import { ReportContainer, ReportTable, ReportRow, ReportCell, TotalRow, TotalCell, NoReports, Select, DeleteButton } from '../styles/ReportsTabStyles';
+import { ReportContainer, ReportTable, ReportRow, ReportCell, TotalRow, TotalCell, NoReports, Select, DeleteButton, ReportCard, ReportCardItem, StatsContainer } from '../styles/ReportsTabStyles';
 
 const formatTime = (seconds: number): string => {
   const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -109,86 +109,135 @@ const ReportsTab: React.FC = () => {
       {filteredReports.length === 0 ? (
         <NoReports>Нет отчётов</NoReports>
       ) : (
-        <ReportTable>
-          <thead>
-            <tr>
-              <ReportCell>Категория</ReportCell>
-              <ReportCell>Начало</ReportCell>
-              <ReportCell>Конец</ReportCell>
-              <ReportCell>Длительность</ReportCell>
-              <ReportCell></ReportCell>
-            </tr>
-          </thead>
-          <tbody>
+        <>
+          <div className="mobile-reports">
             {filteredReports.map((report, index) => (
-              <ReportRow key={`${report.categoryId}-${index}`}>
-                <ReportCell>{report.categoryName}</ReportCell>
-                <ReportCell>{formatDateTime(report.startTime)}</ReportCell>
-                <ReportCell>{formatDateTime(report.endTime)}</ReportCell>
-                <ReportCell>{formatTime(report.duration)}</ReportCell>
-                <ReportCell>
+              <ReportCard key={`${report.categoryId}-${index}`}>
+                <ReportCardItem>
+                  <strong>Категория:</strong> {report.categoryName}
+                </ReportCardItem>
+                <ReportCardItem>
+                  <strong>Начало:</strong> {formatDateTime(report.startTime)}
+                </ReportCardItem>
+                <ReportCardItem>
+                  <strong>Конец:</strong> {formatDateTime(report.endTime)}
+                </ReportCardItem>
+                <ReportCardItem>
+                  <strong>Длительность:</strong> {formatTime(report.duration)}
+                </ReportCardItem>
+                <ReportCardItem>
                   <DeleteButton onClick={() => handleDelete(index)}>Удалить</DeleteButton>
-                </ReportCell>
-              </ReportRow>
+                </ReportCardItem>
+              </ReportCard>
             ))}
-            <TotalRow>
-              <TotalCell>Итого</TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell>{formatTime(totalTime)}</TotalCell>
-              <TotalCell></TotalCell>
-            </TotalRow>
-            <TotalRow>
-              <TotalCell>Итого за неделю</TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell>{formatTime(weekTime)}</TotalCell>
-              <TotalCell></TotalCell>
-            </TotalRow>
-            <TotalRow>
-              <TotalCell>Итого за месяц</TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell>{formatTime(monthTime)}</TotalCell>
-              <TotalCell></TotalCell>
-            </TotalRow>
-            <TotalRow>
-              <TotalCell>Итого за год</TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell>{formatTime(yearTime)}</TotalCell>
-              <TotalCell></TotalCell>
-            </TotalRow>
-            <TotalRow>
-              <TotalCell>Средний день</TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell>{formatTime(avgDay)}</TotalCell>
-              <TotalCell></TotalCell>
-            </TotalRow>
-            <TotalRow>
-              <TotalCell>Максимальный день</TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell>{formatTime(maxDay)}</TotalCell>
-              <TotalCell></TotalCell>
-            </TotalRow>
-            <TotalRow>
-              <TotalCell>Минимальный день</TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell>{formatTime(minDay)}</TotalCell>
-              <TotalCell></TotalCell>
-            </TotalRow>
-            <TotalRow>
-              <TotalCell>Прогноз (ср. день)</TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell></TotalCell>
-              <TotalCell>{formatTime(forecast)}</TotalCell>
-              <TotalCell></TotalCell>
-            </TotalRow>
-          </tbody>
-        </ReportTable>
+            <StatsContainer>
+              <ReportCardItem>
+                <strong>Итого:</strong> {formatTime(totalTime)}
+              </ReportCardItem>
+              <ReportCardItem>
+                <strong>Итого за неделю:</strong> {formatTime(weekTime)}
+              </ReportCardItem>
+              <ReportCardItem>
+                <strong>Итого за месяц:</strong> {formatTime(monthTime)}
+              </ReportCardItem>
+              <ReportCardItem>
+                <strong>Итого за год:</strong> {formatTime(yearTime)}
+              </ReportCardItem>
+              <ReportCardItem>
+                <strong>Средний день:</strong> {formatTime(avgDay)}
+              </ReportCardItem>
+              <ReportCardItem>
+                <strong>Максимальный день:</strong> {formatTime(maxDay)}
+              </ReportCardItem>
+              <ReportCardItem>
+                <strong>Минимальный день:</strong> {formatTime(minDay)}
+              </ReportCardItem>
+              <ReportCardItem>
+                <strong>Прогноз (ср. день):</strong> {formatTime(forecast)}
+              </ReportCardItem>
+            </StatsContainer>
+          </div>
+          <ReportTable className="desktop-reports">
+            <thead>
+              <tr>
+                <ReportCell>Категория</ReportCell>
+                <ReportCell>Начало</ReportCell>
+                <ReportCell>Конец</ReportCell>
+                <ReportCell>Длительность</ReportCell>
+                <ReportCell></ReportCell>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredReports.map((report, index) => (
+                <ReportRow key={`${report.categoryId}-${index}`}>
+                  <ReportCell>{report.categoryName}</ReportCell>
+                  <ReportCell>{formatDateTime(report.startTime)}</ReportCell>
+                  <ReportCell>{formatDateTime(report.endTime)}</ReportCell>
+                  <ReportCell>{formatTime(report.duration)}</ReportCell>
+                  <ReportCell>
+                    <DeleteButton onClick={() => handleDelete(index)}>Удалить</DeleteButton>
+                  </ReportCell>
+                </ReportRow>
+              ))}
+              <TotalRow>
+                <TotalCell>Итого</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(totalTime)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Итого за неделю</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(weekTime)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Итого за месяц</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(monthTime)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Итого за год</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(yearTime)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Средний день</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(avgDay)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Максимальный день</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(maxDay)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Минимальный день</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(minDay)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Прогноз (ср. день)</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(forecast)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+            </tbody>
+          </ReportTable>
+        </>
       )}
     </ReportContainer>
   );
