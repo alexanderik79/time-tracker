@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import type { AppDispatch, RootState } from '../store';
-import { startTimer, stopTimer, updateTime, syncTime, selectCategory } from '../features/timeTracker/CategorySlice';
-import { TimerContainer, Select, CategoryItem, TimeDisplay, StartButton, StopButton } from '../styles/TimerTabStyles';
+import type { RootState } from '../store';
+import { deleteReport } from '../features/timeTracker/CategorySlice';
+import { ReportContainer, ReportTable, ReportRow, ReportCell, TotalRow, TotalCell, NoReports, Select, DeleteButton, ReportCard, ReportCardItem } from '../styles/ReportsTabStyles';
 
 const formatTime = (seconds: number): string => {
   const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -11,107 +11,210 @@ const formatTime = (seconds: number): string => {
   return `${h}:${m}:${s}`;
 };
 
-const TimerTab: React.FC = () => {
-  const dispatch: AppDispatch = useDispatch();
-  const categories = useSelector((state: RootState) => state.timeTracker?.categories || []);
-  const lastSelectedCategory = useSelector((state: RootState) => state.timeTracker?.lastSelectedCategory || null);
-  const selectedCategory = categories.find(cat => cat.id === lastSelectedCategory);
-  const [displayTime, setDisplayTime] = useState(0);
-  const intervalRef = useRef<number | null>(null);
+const formatDateTime = (timestamp: number): string => {
+  return new Date(timestamp).toLocaleString('ru-RU', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+};
 
-  useEffect(() => {
-    dispatch(syncTime());
-    if (selectedCategory) {
-      setDisplayTime(selectedCategory.time);
-      if (selectedCategory.running && selectedCategory.startTime) {
-        const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
-        setDisplayTime(selectedCategory.time + elapsed);
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        intervalRef.current = setInterval(() => {
-          setDisplayTime(prev => prev + 1);
-        }, 1000);
-      } else {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        setDisplayTime(selectedCategory.time);
-      }
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [dispatch, selectedCategory?.id, selectedCategory?.running, selectedCategory?.time]);
+const getWeekStart = (date: Date): Date => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
 
-  const handleSelectCategory = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (selectedCategory?.running && selectedCategory.startTime) {
-      dispatch(updateTime({ id: selectedCategory.id }));
-    }
-    dispatch(selectCategory(e.target.value));
-  };
+const getMonthStart = (date: Date): Date => {
+  const d = new Date(date);
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
 
-  const handleStart = () => {
-    if (selectedCategory) {
-      dispatch(startTimer(selectedCategory.id));
-      setDisplayTime(0);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      intervalRef.current = setInterval(() => {
-        setDisplayTime(prev => prev + 1);
-      }, 1000);
-    }
-  };
+const getYearStart = (date: Date): Date => {
+  const d = new Date(date);
+  d.setMonth(0, 1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
 
-  const handleStop = () => {
-    if (selectedCategory && (selectedCategory.running || selectedCategory.paused)) {
-      if (selectedCategory.running && selectedCategory.startTime) {
+const ReportsTab: React.FC = () => {
+  const dispatch = useDispatch();
+  const reports = useSelector((state: RootState) => state.timeTracker.reports || []);
+  const categories = useSelector((state: RootState) => state.timeTracker.categories || []);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
-        dispatch(updateTime({ id: selectedCategory.id }));
-      }
-      dispatch(stopTimer(selectedCategory.id));
-      setDisplayTime(0);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+  const filteredReports = selectedCategoryId === 'all'
+    ? reports
+    : reports.filter(report => report.categoryId === selectedCategoryId);
+
+  const totalTime = filteredReports.reduce((sum, report) => sum + report.duration, 0);
+
+  const now = new Date();
+  const weekStart = getWeekStart(now).getTime();
+  const monthStart = getMonthStart(now).getTime();
+  const yearStart = getYearStart(now).getTime();
+
+  const weekTime = filteredReports
+    .filter(report => report.startTime >= weekStart)
+    .reduce((sum, report) => sum + report.duration, 0);
+
+  const monthTime = filteredReports
+    .filter(report => report.startTime >= monthStart)
+    .reduce((sum, report) => sum + report.duration, 0);
+
+  const yearTime = filteredReports
+    .filter(report => report.startTime >= yearStart)
+    .reduce((sum, report) => sum + report.duration, 0);
+
+  const dailyDurations = filteredReports.reduce((acc, report) => {
+    const date = new Date(report.startTime).toLocaleDateString('ru-RU');
+    acc[date] = (acc[date] || 0) + report.duration;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const dailyTimes = Object.values(dailyDurations);
+  const avgDay = dailyTimes.length ? Math.round(dailyTimes.reduce((sum, time) => sum + time, 0) / dailyTimes.length) : 0;
+  const maxDay = dailyTimes.length ? Math.max(...dailyTimes) : 0;
+  const minDay = dailyTimes.length ? Math.min(...dailyTimes) : 0;
+
+  const forecast = avgDay;
+
+  const handleDelete = (index: number) => {
+    if (window.confirm('Вы уверены, что хотите удалить этот отчёт?')) {
+      dispatch(deleteReport(index));
     }
   };
 
   return (
-    <TimerContainer>
+    <ReportContainer>
       <Select
-        value={lastSelectedCategory || ''}
-        onChange={handleSelectCategory}
-        disabled={!categories.length || selectedCategory?.running}
+        value={selectedCategoryId}
+        onChange={(e) => setSelectedCategoryId(e.target.value)}
       >
-        <option value="" disabled>Выберите работодателя</option>
+        <option value="all">Все</option>
         {categories.map(category => (
           <option key={category.id} value={category.id}>
             {category.name}
           </option>
         ))}
       </Select>
-      {categories.length === 0 && <p style={{ color: '#f1f1f1' }}>Нет категорий. Добавьте в вкладке "Категории".</p>}
-      {selectedCategory && (
-        <CategoryItem>
-          <div>
-            {!selectedCategory.running && !selectedCategory.paused ? (
-              <StartButton onClick={handleStart}>
-                <TimeDisplay running={selectedCategory.running.toString()}>
-                  {formatTime(selectedCategory.time)}
-                </TimeDisplay>
-              </StartButton>
-            ) : (
-              <StopButton onClick={handleStop}>
-                <TimeDisplay running={selectedCategory.running.toString()}>
-                  {formatTime(selectedCategory.running ? displayTime : selectedCategory.time)}
-                </TimeDisplay>
-              </StopButton>
-            )}
+      {filteredReports.length === 0 ? (
+        <NoReports>Нет отчётов</NoReports>
+      ) : (
+        <>
+          <div className="mobile-reports">
+            {filteredReports.map((report, index) => (
+              <ReportCard key={`${report.categoryId}-${index}`}>
+                <ReportCardItem>
+                  <strong>Категория:</strong> {report.categoryName}
+                </ReportCardItem>
+                <ReportCardItem>
+                  <strong>Начало:</strong> {formatDateTime(report.startTime)}
+                </ReportCardItem>
+                <ReportCardItem>
+                  <strong>Конец:</strong> {formatDateTime(report.endTime)}
+                </ReportCardItem>
+                <ReportCardItem>
+                  <strong>Длительность:</strong> {formatTime(report.duration)}
+                </ReportCardItem>
+                <ReportCardItem>
+                  <DeleteButton onClick={() => handleDelete(index)}>Удалить</DeleteButton>
+                </ReportCardItem>
+              </ReportCard>
+            ))}
           </div>
-        </CategoryItem>
+          <ReportTable className="desktop-reports">
+            <thead>
+              <tr>
+                <ReportCell>Категория</ReportCell>
+                <ReportCell>Начало</ReportCell>
+                <ReportCell>Конец</ReportCell>
+                <ReportCell>Длительность</ReportCell>
+                <ReportCell></ReportCell>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredReports.map((report, index) => (
+                <ReportRow key={`${report.categoryId}-${index}`}>
+                  <ReportCell>{report.categoryName}</ReportCell>
+                  <ReportCell>{formatDateTime(report.startTime)}</ReportCell>
+                  <ReportCell>{formatDateTime(report.endTime)}</ReportCell>
+                  <ReportCell>{formatTime(report.duration)}</ReportCell>
+                  <ReportCell>
+                    <DeleteButton onClick={() => handleDelete(index)}>Удалить</DeleteButton>
+                  </ReportCell>
+                </ReportRow>
+              ))}
+              <TotalRow>
+                <TotalCell>Итого</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(totalTime)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Итого за неделю</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(weekTime)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Итого за месяц</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(monthTime)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Итого за год</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(yearTime)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Средний день</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(avgDay)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Максимальный день</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(maxDay)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Минимальный день</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(minDay)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+              <TotalRow>
+                <TotalCell>Прогноз (ср. день)</TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell></TotalCell>
+                <TotalCell>{formatTime(forecast)}</TotalCell>
+                <TotalCell></TotalCell>
+              </TotalRow>
+            </tbody>
+          </ReportTable>
+        </>
       )}
-    </TimerContainer>
+    </ReportContainer>
   );
 };
 
-export default TimerTab;
+export default ReportsTab;

@@ -113,7 +113,7 @@ const categorySlice = createSlice({
           duration += Math.floor(elapsed / 1000);
         }
         state.reports = state.reports || [];
-        state.reports.push({
+        state.reports.unshift({
           categoryId: category.id,
           categoryName: category.name,
           startTime,

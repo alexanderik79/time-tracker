@@ -6,6 +6,8 @@ export const ReportContainer = styled.div`
   flex-direction: column;
   gap: 16px;
   padding: 16px;
+  max-width: 100%;
+  overflow-x: auto;
 `;
 
 export const ReportTable = styled.table`
@@ -15,6 +17,10 @@ export const ReportTable = styled.table`
   color: ${colors.text};
   border-radius: 8px;
   overflow: hidden;
+
+  @media (max-width: 600px) {
+    display: none;
+  }
 `;
 
 export const ReportRow = styled.tr`
@@ -51,6 +57,8 @@ export const Select = styled.select`
   border-radius: 4px;
   background-color: ${colors.card};
   color: ${colors.text};
+  width: 100%;
+  max-width: 300px;
 `;
 
 export const DeleteButton = styled.button`
@@ -64,4 +72,27 @@ export const DeleteButton = styled.button`
   &:hover {
     opacity: 0.9;
   }
+`;
+
+export const ReportCard = styled.div`
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background-color: ${colors.card};
+  border-radius: 8px;
+  margin-bottom: 12px;
+  animation: slideIn 0.3s ease-in-out;
+
+  @media (max-width: 600px) {
+    display: flex;
+  }
+`;
+
+export const ReportCardItem = styled.div`
+  font-size: 0.9rem;
+  color: ${colors.text};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
