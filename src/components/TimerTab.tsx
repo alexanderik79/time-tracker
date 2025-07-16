@@ -45,7 +45,6 @@ const TimerTab: React.FC = () => {
 
   const handleSelectCategory = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (selectedCategory?.running && selectedCategory.startTime) {
-      const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
       dispatch(updateTime({ id: selectedCategory.id }));
     }
     dispatch(selectCategory(e.target.value));
@@ -89,7 +88,6 @@ const TimerTab: React.FC = () => {
   const handleStop = () => {
     if (selectedCategory && (selectedCategory.running || selectedCategory.paused)) {
       if (selectedCategory.running && selectedCategory.startTime) {
-        const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
         dispatch(updateTime({ id: selectedCategory.id }));
       }
       dispatch(stopTimer(selectedCategory.id));
