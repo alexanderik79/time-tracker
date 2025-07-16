@@ -15,7 +15,7 @@ const App: React.FC = () => {
       <BrowserRouter>
         <AppContainer>
           <Nav>
-            <NavButton to="/timer" end>
+            <NavButton to="/" end>
               Таймер
             </NavButton>
             <NavButton to="/reports">
@@ -26,7 +26,7 @@ const App: React.FC = () => {
             </NavButton>
           </Nav>
           <Routes>
-            <Route path="/timer" element={<TimerTab />} />
+            <Route path="/" element={<TimerTab />} />
             <Route path="/reports" element={<ReportsTab />} />
             <Route path="/categories" element={<AddCategory />} />
           </Routes>

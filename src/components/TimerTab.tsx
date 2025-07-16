@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '../store';
-import { startTimer, pauseTimer, resumeTimer, stopTimer, updateTime, syncTime, selectCategory } from '../features/timeTracker/CategorySlice';
-import { TimerContainer, Select, CategoryItem, CategoryName, TimeDisplay, StartButton, ResumeButton, /* PauseButton, */ StopButton } from '../styles/TimerTabStyles';
+import { startTimer, stopTimer, updateTime, syncTime, selectCategory } from '../features/timeTracker/CategorySlice';
+import { TimerContainer, Select, CategoryItem, TimeDisplay, StartButton, StopButton } from '../styles/TimerTabStyles';
 
 const formatTime = (seconds: number): string => {
   const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -61,33 +61,10 @@ const TimerTab: React.FC = () => {
     }
   };
 
-  const handlePause = () => {
-    if (selectedCategory && selectedCategory.running && selectedCategory.startTime) {
-      dispatch(updateTime({ id: selectedCategory.id }));
-      dispatch(pauseTimer(selectedCategory.id));
-      setDisplayTime(selectedCategory.time);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
-  };
-
-  const handleResume = () => {
-    if (selectedCategory) {
-      dispatch(resumeTimer(selectedCategory.id));
-      setDisplayTime(selectedCategory.time);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      intervalRef.current = setInterval(() => {
-        setDisplayTime(prev => prev + 1);
-      }, 1000);
-    }
-  };
-
   const handleStop = () => {
     if (selectedCategory && (selectedCategory.running || selectedCategory.paused)) {
       if (selectedCategory.running && selectedCategory.startTime) {
-        const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
+
         dispatch(updateTime({ id: selectedCategory.id }));
       }
       dispatch(stopTimer(selectedCategory.id));
@@ -130,12 +107,6 @@ const TimerTab: React.FC = () => {
                   {formatTime(selectedCategory.running ? displayTime : selectedCategory.time)}
                 </TimeDisplay>
               </StopButton>
-            )}
-            {/* {selectedCategory.running && (
-              <PauseButton onClick={handlePause}>Pause</PauseButton>
-            )} */}
-            {selectedCategory.paused && (
-              <ResumeButton onClick={handleResume}>Resume</ResumeButton>
             )}
           </div>
         </CategoryItem>
