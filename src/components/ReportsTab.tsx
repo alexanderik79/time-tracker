@@ -85,7 +85,7 @@ const ReportsTab: React.FC = () => {
   const maxDay = dailyTimes.length ? Math.max(...dailyTimes) : 0;
   const minDay = dailyTimes.length ? Math.min(...dailyTimes) : 0;
 
-  const forecast = avgDay; // Простой прогноз: среднее время за день
+  const forecast = avgDay;
 
   const handleDelete = (index: number) => {
     if (window.confirm('Вы уверены, что хотите удалить этот отчёт?')) {
@@ -109,88 +109,86 @@ const ReportsTab: React.FC = () => {
       {filteredReports.length === 0 ? (
         <NoReports>Нет отчётов</NoReports>
       ) : (
-        <>
-          <ReportTable>
-            <thead>
-              <tr>
-                <ReportCell>Категория</ReportCell>
-                <ReportCell>Начало</ReportCell>
-                <ReportCell>Конец</ReportCell>
-                <ReportCell>Длительность</ReportCell>
-                <ReportCell></ReportCell>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredReports.map((report, index) => (
-                <ReportRow key={`${report.categoryId}-${index}`}>
-                  <ReportCell>{report.categoryName}</ReportCell>
-                  <ReportCell>{formatDateTime(report.startTime)}</ReportCell>
-                  <ReportCell>{formatDateTime(report.endTime)}</ReportCell>
-                  <ReportCell>{formatTime(report.duration)}</ReportCell>
-                  <ReportCell>
-                    <DeleteButton onClick={() => handleDelete(index)}>Удалить</DeleteButton>
-                  </ReportCell>
-                </ReportRow>
-              ))}
-              <TotalRow>
-                <TotalCell>Итого</TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell>{formatTime(totalTime)}</TotalCell>
-                <TotalCell></TotalCell>
-              </TotalRow>
-              <TotalRow>
-                <TotalCell>Итого за неделю</TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell>{formatTime(weekTime)}</TotalCell>
-                <TotalCell></TotalCell>
-              </TotalRow>
-              <TotalRow>
-                <TotalCell>Итого за месяц</TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell>{formatTime(monthTime)}</TotalCell>
-                <TotalCell></TotalCell>
-              </TotalRow>
-              <TotalRow>
-                <TotalCell>Итого за год</TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell>{formatTime(yearTime)}</TotalCell>
-                <TotalCell></TotalCell>
-              </TotalRow>
-              <TotalRow>
-                <TotalCell>Средний день</TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell>{formatTime(avgDay)}</TotalCell>
-                <TotalCell></TotalCell>
-              </TotalRow>
-              <TotalRow>
-                <TotalCell>Максимальный день</TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell>{formatTime(maxDay)}</TotalCell>
-                <TotalCell></TotalCell>
-              </TotalRow>
-              <TotalRow>
-                <TotalCell>Минимальный день</TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell>{formatTime(minDay)}</TotalCell>
-                <TotalCell></TotalCell>
-              </TotalRow>
-              <TotalRow>
-                <TotalCell>Прогноз (ср. день)</TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell></TotalCell>
-                <TotalCell>{formatTime(forecast)}</TotalCell>
-                <TotalCell></TotalCell>
-              </TotalRow>
-            </tbody>
-          </ReportTable>
-        </>
+        <ReportTable>
+          <thead>
+            <tr>
+              <ReportCell>Категория</ReportCell>
+              <ReportCell>Начало</ReportCell>
+              <ReportCell>Конец</ReportCell>
+              <ReportCell>Длительность</ReportCell>
+              <ReportCell></ReportCell>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredReports.map((report, index) => (
+              <ReportRow key={`${report.categoryId}-${index}`}>
+                <ReportCell>{report.categoryName}</ReportCell>
+                <ReportCell>{formatDateTime(report.startTime)}</ReportCell>
+                <ReportCell>{formatDateTime(report.endTime)}</ReportCell>
+                <ReportCell>{formatTime(report.duration)}</ReportCell>
+                <ReportCell>
+                  <DeleteButton onClick={() => handleDelete(index)}>Удалить</DeleteButton>
+                </ReportCell>
+              </ReportRow>
+            ))}
+            <TotalRow>
+              <TotalCell>Итого</TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell>{formatTime(totalTime)}</TotalCell>
+              <TotalCell></TotalCell>
+            </TotalRow>
+            <TotalRow>
+              <TotalCell>Итого за неделю</TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell>{formatTime(weekTime)}</TotalCell>
+              <TotalCell></TotalCell>
+            </TotalRow>
+            <TotalRow>
+              <TotalCell>Итого за месяц</TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell>{formatTime(monthTime)}</TotalCell>
+              <TotalCell></TotalCell>
+            </TotalRow>
+            <TotalRow>
+              <TotalCell>Итого за год</TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell>{formatTime(yearTime)}</TotalCell>
+              <TotalCell></TotalCell>
+            </TotalRow>
+            <TotalRow>
+              <TotalCell>Средний день</TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell>{formatTime(avgDay)}</TotalCell>
+              <TotalCell></TotalCell>
+            </TotalRow>
+            <TotalRow>
+              <TotalCell>Максимальный день</TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell>{formatTime(maxDay)}</TotalCell>
+              <TotalCell></TotalCell>
+            </TotalRow>
+            <TotalRow>
+              <TotalCell>Минимальный день</TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell>{formatTime(minDay)}</TotalCell>
+              <TotalCell></TotalCell>
+            </TotalRow>
+            <TotalRow>
+              <TotalCell>Прогноз (ср. день)</TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell></TotalCell>
+              <TotalCell>{formatTime(forecast)}</TotalCell>
+              <TotalCell></TotalCell>
+            </TotalRow>
+          </tbody>
+        </ReportTable>
       )}
     </ReportContainer>
   );
