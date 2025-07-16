@@ -5,6 +5,7 @@ export const TimerContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 16px;
 `;
 
 export const Select = styled.select`
@@ -18,27 +19,30 @@ export const Select = styled.select`
 
 export const CategoryItem = styled.div`
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  padding: 8px;
+  padding: 16px;
   background-color: ${colors.card};
-  border-radius: 4px;
+  border-radius: 8px;
   animation: slideIn 0.3s ease-in-out;
 `;
 
 export const CategoryName = styled.span`
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: ${colors.text};
+  margin-bottom: 12px;
 `;
 
 export const TimeDisplay = styled.span<{ running: string }>`
-  font-size: 0.9rem;
+  font-size: ${props => (props.running === 'true' ? '2rem' : '2rem')};
   color: ${({ running }) => (running === 'true' ? colors.primary : colors.text)};
+  font-weight: bold;
+  text-align: center;
 `;
 
 export const Button = styled.button`
-  padding: 4px 8px;
-  font-size: 0.8rem;
+  padding: 8px 16px;
+  font-size: 0.9rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -48,22 +52,40 @@ export const Button = styled.button`
   }
 `;
 
-export const StartButton = styled(Button)`
-  background-color: ${colors.primary};
-  color: ${colors.text};
-`;
+
 
 export const ResumeButton = styled(Button)`
   background-color: ${colors.primary};
   color: ${colors.text};
+  margin-top: 12px;
 `;
 
-export const PauseButton = styled(Button)`
+/* export const PauseButton = styled(Button)`
   background-color: ${colors.textSecondary};
   color: ${colors.text};
+  margin-top: 12px;
+`; */
+
+export const StartButton = styled(Button)`
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background-color: ${colors.primary};
+  color: ${colors.text};
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 `;
 
 export const StopButton = styled(Button)`
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
   background-color: ${colors.danger};
   color: ${colors.text};
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 `;

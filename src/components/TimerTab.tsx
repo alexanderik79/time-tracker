@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '../store';
 import { startTimer, pauseTimer, resumeTimer, stopTimer, updateTime, syncTime, selectCategory } from '../features/timeTracker/CategorySlice';
-import { TimerContainer, Select, CategoryItem, CategoryName, TimeDisplay, StartButton, ResumeButton, PauseButton, StopButton } from '../styles/TimerTabStyles';
+import { TimerContainer, Select, CategoryItem, CategoryName, TimeDisplay, StartButton, ResumeButton, /* PauseButton, */ StopButton } from '../styles/TimerTabStyles';
 
 const formatTime = (seconds: number): string => {
   const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -63,10 +63,9 @@ const TimerTab: React.FC = () => {
 
   const handlePause = () => {
     if (selectedCategory && selectedCategory.running && selectedCategory.startTime) {
-      const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
       dispatch(updateTime({ id: selectedCategory.id }));
       dispatch(pauseTimer(selectedCategory.id));
-      setDisplayTime(selectedCategory.time + elapsed);
+      setDisplayTime(selectedCategory.time);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -88,6 +87,7 @@ const TimerTab: React.FC = () => {
   const handleStop = () => {
     if (selectedCategory && (selectedCategory.running || selectedCategory.paused)) {
       if (selectedCategory.running && selectedCategory.startTime) {
+        const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
         dispatch(updateTime({ id: selectedCategory.id }));
       }
       dispatch(stopTimer(selectedCategory.id));
@@ -116,22 +116,26 @@ const TimerTab: React.FC = () => {
       {categories.length === 0 && <p style={{ color: '#f1f1f1' }}>Нет категорий. Добавьте в вкладке "Категории".</p>}
       {selectedCategory && (
         <CategoryItem>
-          <CategoryName>{selectedCategory.name}</CategoryName>
+          {/* <CategoryName>{selectedCategory.name}</CategoryName> */}
           <div>
-            <TimeDisplay running={selectedCategory.running.toString()}>
-              {formatTime(selectedCategory.running ? displayTime : selectedCategory.time)}
-            </TimeDisplay>
-            {!selectedCategory.running && !selectedCategory.paused && (
-              <StartButton onClick={handleStart}>Start</StartButton>
+            {!selectedCategory.running && !selectedCategory.paused ? (
+              <StartButton onClick={handleStart}>
+                <TimeDisplay running={selectedCategory.running.toString()}>
+                  {formatTime(selectedCategory.time)}
+                </TimeDisplay>
+              </StartButton>
+            ) : (
+              <StopButton onClick={handleStop}>
+                <TimeDisplay running={selectedCategory.running.toString()}>
+                  {formatTime(selectedCategory.running ? displayTime : selectedCategory.time)}
+                </TimeDisplay>
+              </StopButton>
             )}
-            {selectedCategory.running && (
+            {/* {selectedCategory.running && (
               <PauseButton onClick={handlePause}>Pause</PauseButton>
-            )}
+            )} */}
             {selectedCategory.paused && (
               <ResumeButton onClick={handleResume}>Resume</ResumeButton>
-            )}
-            {(selectedCategory.running || selectedCategory.paused) && (
-              <StopButton onClick={handleStop}>Stop</StopButton>
             )}
           </div>
         </CategoryItem>
