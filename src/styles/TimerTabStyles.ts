@@ -1,3 +1,5 @@
+// src/styles/TimerTabStyles.ts
+
 import styled from 'styled-components';
 import { colors } from './GlobalStyles';
 
@@ -38,6 +40,7 @@ export const TimeDisplay = styled.span<{ running: string }>`
   color: ${({ running }) => (running === 'true' ? colors.primary : colors.text)};
   font-weight: bold;
   text-align: center;
+  display: block; /* <--- Убедитесь, что эта строка есть */
 `;
 
 export const Button = styled.button`
@@ -64,7 +67,8 @@ export const StartButton = styled(Button)`
   border-radius: 50%;
   background-color: ${colors.primary};
   color: ${colors.text};
-  display: flex;
+  display: flex; /* <--- Убедитесь, что display: flex есть */
+  flex-direction: column; /* <--- Убедитесь, что flex-direction: column есть */
   justify-content: center;
   align-items: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -76,7 +80,8 @@ export const StopButton = styled(Button)`
   border-radius: 50%;
   background-color: ${colors.danger};
   color: ${colors.text};
-  display: flex;
+  display: flex; /* <--- Убедитесь, что display: flex есть */
+  flex-direction: column; /* <--- Убедитесь, что flex-direction: column есть */
   justify-content: center;
   align-items: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);

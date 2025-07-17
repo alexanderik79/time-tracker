@@ -1,9 +1,11 @@
+// src/components/TimerTab.tsx
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '../store';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { startTimer, stopTimer, updateTime, syncTime, selectCategory } from '../features/timeTracker/CategorySlice';
-import { TimerContainer, CategoryItem, TimeDisplay, StartButton, StopButton } from '../styles/TimerTabStyles';
+import { TimerContainer, CategoryItem, TimeDisplay, StartButton, StopButton } from '../styles/TimerTabStyles'; // Import the updated styled components
 
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -17,13 +19,29 @@ const formatTime = (seconds: number): string => {
   return `${h}:${m}:${s}`;
 };
 
+const formatMoney = (amount: number, currency: string, language: string): string => {
+    return new Intl.NumberFormat(language, {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(amount);
+};
+
+
 const TimerTab: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const categories = useSelector((state: RootState) => state.timeTracker?.categories || []);
   const lastSelectedCategory = useSelector((state: RootState) => state.timeTracker?.lastSelectedCategory || null);
   const selectedCategory = categories.find(cat => cat.id === lastSelectedCategory);
+  
+  const settings = useSelector((state: RootState) => state.settings);
+  const { hourlyRate, currency, language } = settings;
+
   const [displayTime, setDisplayTime] = useState(0);
   const intervalRef = useRef<number | null>(null);
+
+  const earnedAmount = (displayTime / 3600) * hourlyRate;
 
   useEffect(() => {
     dispatch(syncTime());
@@ -70,7 +88,6 @@ const TimerTab: React.FC = () => {
   const handleStop = () => {
     if (selectedCategory && (selectedCategory.running || selectedCategory.paused)) {
       if (selectedCategory.running && selectedCategory.startTime) {
-
         dispatch(updateTime({ id: selectedCategory.id }));
       }
       dispatch(stopTimer(selectedCategory.id));
@@ -93,7 +110,6 @@ const TimerTab: React.FC = () => {
           className="select-cust"
           value={lastSelectedCategory || ''}
           onChange={handleSelectCategory}
-
           disabled={!categories.length || selectedCategory?.running}
         >
           <MenuItem value="" disabled>Выберите работодателя</MenuItem>
@@ -107,21 +123,28 @@ const TimerTab: React.FC = () => {
       {categories.length === 0 && <p style={{ color: '#f1f1f1' }}>Нет категорий. Добавьте в вкладке "Категории".</p>}
       {selectedCategory && (
         <CategoryItem>
-          <div>
-            {!selectedCategory.running && !selectedCategory.paused ? (
-              <StartButton onClick={handleStart}>
-                <TimeDisplay running={selectedCategory.running.toString()}>
-                  {formatTime(selectedCategory.time)}
-                </TimeDisplay>
-              </StartButton>
-            ) : (
-              <StopButton onClick={handleStop}>
-                <TimeDisplay running={selectedCategory.running.toString()}>
-                  {formatTime(selectedCategory.running ? displayTime : selectedCategory.time)}
-                </TimeDisplay>
-              </StopButton>
-            )}
-          </div>
+          {/* We've already set flex-direction: column on StartButton/StopButton */}
+          {/* and display: block on TimeDisplay, so they'll stack automatically. */}
+          {/* We can remove the redundant <div> wrapper here. */}
+          {!selectedCategory.running && !selectedCategory.paused ? (
+            <StartButton onClick={handleStart}>
+              <TimeDisplay running={selectedCategory.running.toString()}>
+                {formatTime(selectedCategory.time)}
+              </TimeDisplay>
+              <span style={{ fontSize: '1.2rem', color: '#f1f1f1' /* Removed marginTop here */ }}>
+                  {formatMoney((selectedCategory.time / 3600) * hourlyRate, currency, language)}
+              </span>
+            </StartButton>
+          ) : (
+            <StopButton onClick={handleStop}>
+              <TimeDisplay running={selectedCategory.running.toString()}>
+                {formatTime(selectedCategory.running ? displayTime : selectedCategory.time)}
+              </TimeDisplay>
+              <span style={{ fontSize: '1.2rem', color: '#f1f1f1' /* Removed marginTop here */ }}>
+                  {formatMoney(earnedAmount, currency, language)}
+              </span>
+            </StopButton>
+          )}
         </CategoryItem>
       )}
     </TimerContainer>

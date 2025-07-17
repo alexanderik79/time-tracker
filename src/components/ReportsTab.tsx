@@ -1,7 +1,9 @@
+// src/components/ReportsTab.tsx
+
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../store';
-import { deleteReport } from '../features/timeTracker/CategorySlice'; // Убедитесь, что deleteReport импортируется корректно
+import { deleteReport } from '../features/timeTracker/CategorySlice';
 import { ReportContainer, ReportTable, ReportRow, ReportCell, TotalRow, TotalCell, NoReports, DeleteButton, ReportCard, ReportCardItem, StatsContainer, FilterContainer } from '../styles/ReportsTabStyles';
 
 import InputLabel from '@mui/material/InputLabel';
@@ -25,6 +27,16 @@ const formatDateTime = (timestamp: number): string => {
     minute: '2-digit',
     second: '2-digit',
   });
+};
+
+// Функция для форматирования денег (уже есть в TimerTab, продублируем или вынесем в utils)
+const formatMoney = (amount: number, currency: string, language: string): string => {
+    return new Intl.NumberFormat(language, {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(amount);
 };
 
 const getWeekStart = (date: Date): Date => {
@@ -53,22 +65,23 @@ const getMonthEnd = (date: Date): Date => {
 
 const ReportsTab: React.FC = () => {
   const dispatch = useDispatch();
-  // Убедитесь, что путь к reports и categories правильный в Redux store
   const reports = useSelector((state: RootState) => state.timeTracker.reports || []);
   const categories = useSelector((state: RootState) => state.timeTracker.categories || []);
+  // Получаем настройки из Redux-стора
+  const settings = useSelector((state: RootState) => state.settings);
+  const { hourlyRate, currency, language } = settings;
   
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState<string>(now.getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((now.getMonth() + 1).toString().padStart(2, '0'));
 
-  const years = Array.from({ length: 10 }, (_, i) => (now.getFullYear() - 5 + i).toString());
+  const years = Array.from({ length: 5 }, (_, i) => (now.getFullYear() - 4 + i).toString());
   const months = [
     '01', '02', '03', '04', '05', '06',
     '07', '08', '09', '10', '11', '12'
   ];
 
-  // Вычисляем начало и конец месяца для фильтрации
   const monthStart = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, 1, 0, 0, 0, 0).getTime();
   const monthEnd = getMonthEnd(new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)).getTime();
 
@@ -77,25 +90,23 @@ const ReportsTab: React.FC = () => {
     .filter(report => report.startTime >= monthStart && report.startTime <= monthEnd);
 
   const totalTime = filteredReports.reduce((sum, report) => sum + report.duration, 0);
+  // Общая сумма заработка за отфильтрованный период
+  const totalEarnedAmount = (totalTime / 3600) * hourlyRate;
 
-  // Пересчитываем weekStart и yearStart на основе выбранного года/месяца, если это требуется для статистики
-  // Текущая реализация weekTime и yearTime использует 'now', что может быть нелогично при фильтрации по месяцам/годам
-  // Если weekTime и yearTime должны также фильтроваться по selectedYear/Month, то их логику нужно скорректировать.
-  // Например, для yearTime:
-  const currentYearStartForFilter = getYearStart(new Date(parseInt(selectedYear), parseInt(selectedMonth) -1)).getTime(); // Год начала выбранного месяца
+  const currentYearStartForFilter = getYearStart(new Date(parseInt(selectedYear), parseInt(selectedMonth) -1)).getTime();
   const yearTime = filteredReports
     .filter(report => report.startTime >= currentYearStartForFilter)
     .reduce((sum, report) => sum + report.duration, 0);
+  const yearEarnedAmount = (yearTime / 3600) * hourlyRate; // Заработок за год
 
-  // Для weekTime, если она должна быть в контексте выбранного месяца, это сложнее,
-  // так как неделя может выходить за пределы месяца. Пока оставим как есть,
-  // предполагая, что "Итого за неделю" это текущая неделя, а не неделя выбранного периода.
   const weekStart = getWeekStart(now).getTime();
-  const weekTime = filteredReports // Применяем фильтр по категории и месяцу
-    .filter(report => report.startTime >= weekStart) // Затем фильтр по текущей неделе
+  const weekTime = filteredReports
+    .filter(report => report.startTime >= weekStart)
     .reduce((sum, report) => sum + report.duration, 0);
+  const weekEarnedAmount = (weekTime / 3600) * hourlyRate; // Заработок за неделю
 
-  const monthTime = totalTime; // monthTime уже равен totalTime, т.к. filteredReports уже по месяцу
+  const monthTime = totalTime;
+  const monthEarnedAmount = totalEarnedAmount; // Заработок за месяц равен общему за отфильтрованный период
 
   const dailyDurations = filteredReports.reduce((acc, report) => {
     const date = new Date(report.startTime).toLocaleDateString('ru-RU');
@@ -108,7 +119,13 @@ const ReportsTab: React.FC = () => {
   const maxDay = dailyTimes.length ? Math.max(...dailyTimes) : 0;
   const minDay = dailyTimes.length ? Math.min(...dailyTimes) : 0;
 
-  const forecast = avgDay; // Прогноз = средний день, если нет другой логики
+  const avgDayEarned = (avgDay / 3600) * hourlyRate;
+  const maxDayEarned = (maxDay / 3600) * hourlyRate;
+  const minDayEarned = (minDay / 3600) * hourlyRate;
+
+  const forecast = avgDay;
+  const forecastEarned = (forecast / 3600) * hourlyRate;
+
 
   const handleDelete = (index: number) => {
     if (window.confirm('Вы уверены, что хотите удалить этот отчёт?')) {
@@ -119,16 +136,15 @@ const ReportsTab: React.FC = () => {
   return (
     <ReportContainer>
       <FilterContainer>
-        {/* Категории */}
-        <FormControl sx={{ m: 1, minWidth: 120 }}> {/* FormControl для лучшего UI/UX */}
+        <FormControl sx={{ m: 1, minWidth: 120 }}>
           <InputLabel id="category-select-label" className="inputLabel-cust">Категория</InputLabel>
           <Select
             className="select-cust"
-            labelId="category-select-label" // Связываем с InputLabel
+            labelId="category-select-label"
             id="category-select"
             value={selectedCategoryId}
-            label="Категория" // Добавляем label для Material-UI Select
-            onChange={(e) => setSelectedCategoryId(e.target.value as string)} // Приводим тип
+            label="Категория"
+            onChange={(e) => setSelectedCategoryId(e.target.value as string)}
           >
             <MenuItem value="all">Все</MenuItem>
             {categories.map(category => (
@@ -139,7 +155,6 @@ const ReportsTab: React.FC = () => {
           </Select>
         </FormControl>
 
-        {/* Год */}
         <FormControl sx={{ m: 1, minWidth: 120 }}>
           <InputLabel id="year-select-label" className="inputLabel-cust">Год</InputLabel>
           <Select
@@ -156,7 +171,6 @@ const ReportsTab: React.FC = () => {
           </Select>
         </FormControl>
 
-        {/* Месяц */}
         <FormControl sx={{ m: 1, minWidth: 120 }}>
           <InputLabel id="month-select-label" className="inputLabel-cust">Месяц</InputLabel>
           <Select
@@ -193,6 +207,10 @@ const ReportsTab: React.FC = () => {
                 <ReportCardItem>
                   <strong>Длительность:</strong> {formatTime(report.duration)}
                 </ReportCardItem>
+                {/* Новое поле: Заработок для каждой карточки */}
+                <ReportCardItem>
+                  <strong>Заработок:</strong> {formatMoney((report.duration / 3600) * hourlyRate, currency, language)}
+                </ReportCardItem>
                 <ReportCardItem>
                   <DeleteButton onClick={() => handleDelete(index)}>Удалить</DeleteButton>
                 </ReportCardItem>
@@ -200,28 +218,28 @@ const ReportsTab: React.FC = () => {
             ))}
             <StatsContainer>
               <ReportCardItem>
-                <strong>Итого:</strong> {formatTime(totalTime)}
+                <strong>Итого:</strong> {formatTime(totalTime)} ({formatMoney(totalEarnedAmount, currency, language)})
               </ReportCardItem>
               <ReportCardItem>
-                <strong>Итого за неделю:</strong> {formatTime(weekTime)}
+                <strong>Итого за неделю:</strong> {formatTime(weekTime)} ({formatMoney(weekEarnedAmount, currency, language)})
               </ReportCardItem>
               <ReportCardItem>
-                <strong>Итого за месяц:</strong> {formatTime(monthTime)}
+                <strong>Итого за месяц:</strong> {formatTime(monthTime)} ({formatMoney(monthEarnedAmount, currency, language)})
               </ReportCardItem>
               <ReportCardItem>
-                <strong>Итого за год:</strong> {formatTime(yearTime)}
+                <strong>Итого за год:</strong> {formatTime(yearTime)} ({formatMoney(yearEarnedAmount, currency, language)})
               </ReportCardItem>
               <ReportCardItem>
-                <strong>Средний день:</strong> {formatTime(avgDay)}
+                <strong>Средний день:</strong> {formatTime(avgDay)} ({formatMoney(avgDayEarned, currency, language)})
               </ReportCardItem>
               <ReportCardItem>
-                <strong>Максимальный день:</strong> {formatTime(maxDay)}
+                <strong>Максимальный день:</strong> {formatTime(maxDay)} ({formatMoney(maxDayEarned, currency, language)})
               </ReportCardItem>
               <ReportCardItem>
-                <strong>Минимальный день:</strong> {formatTime(minDay)}
+                <strong>Минимальный день:</strong> {formatTime(minDay)} ({formatMoney(minDayEarned, currency, language)})
               </ReportCardItem>
               <ReportCardItem>
-                <strong>Прогноз (ср. день):</strong> {formatTime(forecast)}
+                <strong>Прогноз (ср. день):</strong> {formatTime(forecast)} ({formatMoney(forecastEarned, currency, language)})
               </ReportCardItem>
             </StatsContainer>
           </div>
@@ -232,6 +250,7 @@ const ReportsTab: React.FC = () => {
                 <ReportCell>Начало</ReportCell>
                 <ReportCell>Конец</ReportCell>
                 <ReportCell>Длительность</ReportCell>
+                <ReportCell>Заработок</ReportCell> {/* Новый заголовок столбца */}
                 <ReportCell></ReportCell>
               </tr>
             </thead>
@@ -242,6 +261,8 @@ const ReportsTab: React.FC = () => {
                   <ReportCell>{formatDateTime(report.startTime)}</ReportCell>
                   <ReportCell>{formatDateTime(report.endTime)}</ReportCell>
                   <ReportCell>{formatTime(report.duration)}</ReportCell>
+                  {/* Новое поле: Заработок для каждой строки таблицы */}
+                  <ReportCell>{formatMoney((report.duration / 3600) * hourlyRate, currency, language)}</ReportCell>
                   <ReportCell>
                     <DeleteButton onClick={() => handleDelete(index)}>Удалить</DeleteButton>
                   </ReportCell>
@@ -252,6 +273,7 @@ const ReportsTab: React.FC = () => {
                 <TotalCell></TotalCell>
                 <TotalCell></TotalCell>
                 <TotalCell>{formatTime(totalTime)}</TotalCell>
+                <TotalCell>{formatMoney(totalEarnedAmount, currency, language)}</TotalCell> {/* Сумма для Итого */}
                 <TotalCell></TotalCell>
               </TotalRow>
               <TotalRow>
@@ -259,6 +281,7 @@ const ReportsTab: React.FC = () => {
                 <TotalCell></TotalCell>
                 <TotalCell></TotalCell>
                 <TotalCell>{formatTime(weekTime)}</TotalCell>
+                <TotalCell>{formatMoney(weekEarnedAmount, currency, language)}</TotalCell> {/* Сумма для Итого за неделю */}
                 <TotalCell></TotalCell>
               </TotalRow>
               <TotalRow>
@@ -266,6 +289,7 @@ const ReportsTab: React.FC = () => {
                 <TotalCell></TotalCell>
                 <TotalCell></TotalCell>
                 <TotalCell>{formatTime(monthTime)}</TotalCell>
+                <TotalCell>{formatMoney(monthEarnedAmount, currency, language)}</TotalCell> {/* Сумма для Итого за месяц */}
                 <TotalCell></TotalCell>
               </TotalRow>
               <TotalRow>
@@ -273,6 +297,7 @@ const ReportsTab: React.FC = () => {
                 <TotalCell></TotalCell>
                 <TotalCell></TotalCell>
                 <TotalCell>{formatTime(yearTime)}</TotalCell>
+                <TotalCell>{formatMoney(yearEarnedAmount, currency, language)}</TotalCell> {/* Сумма для Итого за год */}
                 <TotalCell></TotalCell>
               </TotalRow>
               <TotalRow>
@@ -280,6 +305,7 @@ const ReportsTab: React.FC = () => {
                 <TotalCell></TotalCell>
                 <TotalCell></TotalCell>
                 <TotalCell>{formatTime(avgDay)}</TotalCell>
+                <TotalCell>{formatMoney(avgDayEarned, currency, language)}</TotalCell> {/* Сумма для Средний день */}
                 <TotalCell></TotalCell>
               </TotalRow>
               <TotalRow>
@@ -287,6 +313,7 @@ const ReportsTab: React.FC = () => {
                 <TotalCell></TotalCell>
                 <TotalCell></TotalCell>
                 <TotalCell>{formatTime(maxDay)}</TotalCell>
+                <TotalCell>{formatMoney(maxDayEarned, currency, language)}</TotalCell> {/* Сумма для Максимальный день */}
                 <TotalCell></TotalCell>
               </TotalRow>
               <TotalRow>
@@ -294,6 +321,7 @@ const ReportsTab: React.FC = () => {
                 <TotalCell></TotalCell>
                 <TotalCell></TotalCell>
                 <TotalCell>{formatTime(minDay)}</TotalCell>
+                <TotalCell>{formatMoney(minDayEarned, currency, language)}</TotalCell> {/* Сумма для Минимальный день */}
                 <TotalCell></TotalCell>
               </TotalRow>
               <TotalRow>
@@ -301,6 +329,7 @@ const ReportsTab: React.FC = () => {
                 <TotalCell></TotalCell>
                 <TotalCell></TotalCell>
                 <TotalCell>{formatTime(forecast)}</TotalCell>
+                <TotalCell>{formatMoney(forecastEarned, currency, language)}</TotalCell> {/* Сумма для Прогноз */}
                 <TotalCell></TotalCell>
               </TotalRow>
             </tbody>
