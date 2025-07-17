@@ -52,14 +52,14 @@ const SettingsTab: React.FC = () => {
           <Select id="currency" {...register('currency')}> {/* <--- Используем стилизованный селект */}
             <option value="USD">USD</option>
             <option value="EUR">EUR</option>
-            <option value="RUB">RUB</option>
+            <option value="UAH">UAH</option>
             {/* Добавьте другие валюты по желанию */}
           </Select>
         </FormGroup>
         <FormGroup>
           <Label htmlFor="language">Язык:</Label>
           <Select id="language" {...register('language')}>
-            <option value="ru">Русский</option>
+            <option value="uk">Українська</option>
             <option value="en">English</option>
             {/* Добавьте другие языки по желанию */}
           </Select>

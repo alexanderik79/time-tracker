@@ -9,7 +9,12 @@ import { AppContainer, Nav, NavButton } from './styles/AppStyles';
 import TimerTab from './components/TimerTab';
 import ReportsTab from './components/ReportsTab';
 import AddCategory from './components/AddCategory';
-import SettingsTab from './components/SettingsTab'; // <--- Импортируем новый компонент
+import SettingsTab from './components/SettingsTab';
+
+import TimerIcon from '@mui/icons-material/Timer';
+import AssessmentIcon from '@mui/icons-material/Assessment'; 
+import CategoryIcon from '@mui/icons-material/Category';     
+import SettingsIcon from '@mui/icons-material/Settings';     
 
 const App: React.FC = () => {
   return (
@@ -19,23 +24,23 @@ const App: React.FC = () => {
         <AppContainer>
           <Nav>
             <NavButton to="/" end>
-              Таймер
+              <TimerIcon /> {/* Иконка для Таймера */}
             </NavButton>
             <NavButton to="/reports">
-              Отчёты
+              <AssessmentIcon /> {/* Иконка для Отчётов */}
             </NavButton>
             <NavButton to="/categories">
-              Категории
+              <CategoryIcon /> {/* Иконка для Категорий */}
             </NavButton>
-            <NavButton to="/settings"> {/* <--- Добавляем новую кнопку навигации */}
-              Настройки
+            <NavButton to="/settings">
+              <SettingsIcon /> {/* Иконка для Настроек */}
             </NavButton>
           </Nav>
           <Routes>
             <Route path="/" element={<TimerTab />} />
             <Route path="/reports" element={<ReportsTab />} />
             <Route path="/categories" element={<AddCategory />} />
-            <Route path="/settings" element={<SettingsTab />} /> {/* <--- Добавляем новый маршрут */}
+            <Route path="/settings" element={<SettingsTab />} />
           </Routes>
         </AppContainer>
       </BrowserRouter>
