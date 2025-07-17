@@ -58,18 +58,25 @@ export const GlobalStyle = createGlobalStyle`
   color: #f1f1f1; /* text inside input */
 }
 
-// .select-cust .Mui-disabled {
-//   color: #6b7280; /* textSecondary */
-//   background-color: #1e1e1e;
-//   border-color: #6b7280;
-// }
-
 .inputLabel-cust {
   color: #4a90e2 !important;
   font-size: 14px;
   transition: all 0.2s ease;
 }
 
+
+.MuiPaper-root {
+  background-color: #1e1e1e !important;
+  color: #f1f1f1 !important;
+}
+
+.MuiMenuItem-root {
+  color: #f1f1f1 !important;
+}
+
+.MuiMenuItem-root:hover {
+  background-color: #2a2a2a !important;
+}
 
 
   @keyframes slideIn {
