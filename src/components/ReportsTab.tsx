@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../store';
-import { deleteReport } from '../features/timeTracker/CategorySlice';
-import { ReportContainer, ReportTable, ReportRow, ReportCell, TotalRow, TotalCell, NoReports, Select, DeleteButton, ReportCard, ReportCardItem, StatsContainer, FilterContainer } from '../styles/ReportsTabStyles';
+import { deleteReport } from '../features/timeTracker/CategorySlice'; // Убедитесь, что deleteReport импортируется корректно
+import { ReportContainer, ReportTable, ReportRow, ReportCell, TotalRow, TotalCell, NoReports, DeleteButton, ReportCard, ReportCardItem, StatsContainer, FilterContainer } from '../styles/ReportsTabStyles';
+
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import FormControl from '@mui/material/FormControl'; 
 
 const formatTime = (seconds: number): string => {
   const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -25,7 +30,7 @@ const formatDateTime = (timestamp: number): string => {
 const getWeekStart = (date: Date): Date => {
   const d = new Date(date);
   const day = d.getDay();
-  const diff = day === 0 ? 6 : day - 1;
+  const diff = day === 0 ? 6 : day - 1; // Понедельник - первый день недели
   d.setDate(d.getDate() - diff);
   d.setHours(0, 0, 0, 0);
   return d;
@@ -33,23 +38,25 @@ const getWeekStart = (date: Date): Date => {
 
 const getYearStart = (date: Date): Date => {
   const d = new Date(date);
-  d.setMonth(0, 1);
+  d.setMonth(0, 1); // Устанавливаем 1 января
   d.setHours(0, 0, 0, 0);
   return d;
 };
 
 const getMonthEnd = (date: Date): Date => {
   const d = new Date(date);
-  d.setMonth(d.getMonth() + 1);
-  d.setDate(0);
+  d.setMonth(d.getMonth() + 1); // Переходим на следующий месяц
+  d.setDate(0); // Устанавливаем на 0-й день следующего месяца, что является последним днем текущего
   d.setHours(23, 59, 59, 999);
   return d;
 };
 
 const ReportsTab: React.FC = () => {
   const dispatch = useDispatch();
+  // Убедитесь, что путь к reports и categories правильный в Redux store
   const reports = useSelector((state: RootState) => state.timeTracker.reports || []);
   const categories = useSelector((state: RootState) => state.timeTracker.categories || []);
+  
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState<string>(now.getFullYear().toString());
@@ -61,6 +68,7 @@ const ReportsTab: React.FC = () => {
     '07', '08', '09', '10', '11', '12'
   ];
 
+  // Вычисляем начало и конец месяца для фильтрации
   const monthStart = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, 1, 0, 0, 0, 0).getTime();
   const monthEnd = getMonthEnd(new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)).getTime();
 
@@ -70,18 +78,24 @@ const ReportsTab: React.FC = () => {
 
   const totalTime = filteredReports.reduce((sum, report) => sum + report.duration, 0);
 
-  const weekStart = getWeekStart(now).getTime();
-  const yearStart = getYearStart(new Date(parseInt(selectedYear))).getTime();
-
-  const weekTime = filteredReports
-    .filter(report => report.startTime >= weekStart)
-    .reduce((sum, report) => sum + report.duration, 0);
-
-  const monthTime = filteredReports.reduce((sum, report) => sum + report.duration, 0);
-
+  // Пересчитываем weekStart и yearStart на основе выбранного года/месяца, если это требуется для статистики
+  // Текущая реализация weekTime и yearTime использует 'now', что может быть нелогично при фильтрации по месяцам/годам
+  // Если weekTime и yearTime должны также фильтроваться по selectedYear/Month, то их логику нужно скорректировать.
+  // Например, для yearTime:
+  const currentYearStartForFilter = getYearStart(new Date(parseInt(selectedYear), parseInt(selectedMonth) -1)).getTime(); // Год начала выбранного месяца
   const yearTime = filteredReports
-    .filter(report => report.startTime >= yearStart)
+    .filter(report => report.startTime >= currentYearStartForFilter)
     .reduce((sum, report) => sum + report.duration, 0);
+
+  // Для weekTime, если она должна быть в контексте выбранного месяца, это сложнее,
+  // так как неделя может выходить за пределы месяца. Пока оставим как есть,
+  // предполагая, что "Итого за неделю" это текущая неделя, а не неделя выбранного периода.
+  const weekStart = getWeekStart(now).getTime();
+  const weekTime = filteredReports // Применяем фильтр по категории и месяцу
+    .filter(report => report.startTime >= weekStart) // Затем фильтр по текущей неделе
+    .reduce((sum, report) => sum + report.duration, 0);
+
+  const monthTime = totalTime; // monthTime уже равен totalTime, т.к. filteredReports уже по месяцу
 
   const dailyDurations = filteredReports.reduce((acc, report) => {
     const date = new Date(report.startTime).toLocaleDateString('ru-RU');
@@ -94,7 +108,7 @@ const ReportsTab: React.FC = () => {
   const maxDay = dailyTimes.length ? Math.max(...dailyTimes) : 0;
   const minDay = dailyTimes.length ? Math.min(...dailyTimes) : 0;
 
-  const forecast = avgDay;
+  const forecast = avgDay; // Прогноз = средний день, если нет другой логики
 
   const handleDelete = (index: number) => {
     if (window.confirm('Вы уверены, что хотите удалить этот отчёт?')) {
@@ -105,34 +119,61 @@ const ReportsTab: React.FC = () => {
   return (
     <ReportContainer>
       <FilterContainer>
-        <Select
-          value={selectedCategoryId}
-          onChange={(e) => setSelectedCategoryId(e.target.value)}
-        >
-          <option value="all">Все</option>
-          {categories.map(category => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </Select>
-        <Select
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(e.target.value)}
-        >
-          {years.map(year => (
-            <option key={year} value={year}>{year}</option>
-          ))}
-        </Select>
-        <Select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-        >
-          {months.map(month => (
-            <option key={month} value={month}>{month}</option>
-          ))}
-        </Select>
+        {/* Категории */}
+        <FormControl sx={{ m: 1, minWidth: 120 }}> {/* FormControl для лучшего UI/UX */}
+          <InputLabel id="category-select-label" className="inputLabel-cust">Категория</InputLabel>
+          <Select
+            className="select-cust"
+            labelId="category-select-label" // Связываем с InputLabel
+            id="category-select"
+            value={selectedCategoryId}
+            label="Категория" // Добавляем label для Material-UI Select
+            onChange={(e) => setSelectedCategoryId(e.target.value as string)} // Приводим тип
+          >
+            <MenuItem value="all">Все</MenuItem>
+            {categories.map(category => (
+              <MenuItem key={category.id} value={category.id}>
+                {category.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Год */}
+        <FormControl sx={{ m: 1, minWidth: 120 }}>
+          <InputLabel id="year-select-label" className="inputLabel-cust">Год</InputLabel>
+          <Select
+            className="select-cust"
+            labelId="year-select-label"
+            id="year-select"
+            value={selectedYear}
+            label="Год"
+            onChange={(e) => setSelectedYear(e.target.value as string)}
+          >
+            {years.map(year => (
+              <MenuItem key={year} value={year}>{year}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Месяц */}
+        <FormControl sx={{ m: 1, minWidth: 120 }}>
+          <InputLabel id="month-select-label" className="inputLabel-cust">Месяц</InputLabel>
+          <Select
+            className="select-cust"
+            labelId="month-select-label"
+            id="month-select"
+            value={selectedMonth}
+            label="Месяц"
+            onChange={(e) => setSelectedMonth(e.target.value as string)}
+          >
+            {months.map(month => (
+              <MenuItem key={month} value={month}>{month}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </FilterContainer>
+
       {filteredReports.length === 0 ? (
         <NoReports>Нет отчётов за выбранный период</NoReports>
       ) : (

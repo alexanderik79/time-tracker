@@ -31,6 +31,47 @@ export const GlobalStyle = createGlobalStyle`
     padding: 16px;
   }
 
+.select-cust {
+  background-color: #1e1e1e; /* card */
+  color: #f1f1f1;            /* text */
+  border-radius: 8px;
+}
+
+.select-cust .MuiOutlinedInput-notchedOutline {
+  border-color: #4a90e2; /* primary */
+}
+
+.select-cust:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #357abd; /* primaryHover */
+}
+
+.select-cust.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #4a90e2; /* primary */
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.select-cust .MuiSelect-icon {
+  color: #f1f1f1; /* dropdown arrow */
+}
+
+.select-cust .MuiInputBase-input {
+  color: #f1f1f1; /* text inside input */
+}
+
+// .select-cust .Mui-disabled {
+//   color: #6b7280; /* textSecondary */
+//   background-color: #1e1e1e;
+//   border-color: #6b7280;
+// }
+
+.inputLabel-cust {
+  color: #4a90e2 !important;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+
+
   @keyframes slideIn {
     from {
       transform: translateY(20px);

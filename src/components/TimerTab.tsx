@@ -1,8 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '../store';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import { startTimer, stopTimer, updateTime, syncTime, selectCategory } from '../features/timeTracker/CategorySlice';
-import { TimerContainer, Select, CategoryItem, TimeDisplay, StartButton, StopButton } from '../styles/TimerTabStyles';
+import { TimerContainer, CategoryItem, TimeDisplay, StartButton, StopButton } from '../styles/TimerTabStyles';
+
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import FormControl from '@mui/material/FormControl'; 
 
 const formatTime = (seconds: number): string => {
   const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -43,7 +49,7 @@ const TimerTab: React.FC = () => {
     };
   }, [dispatch, selectedCategory?.id, selectedCategory?.running, selectedCategory?.time]);
 
-  const handleSelectCategory = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSelectCategory = (e: SelectChangeEvent<string>) => {
     if (selectedCategory?.running && selectedCategory.startTime) {
       dispatch(updateTime({ id: selectedCategory.id }));
     }
@@ -78,18 +84,26 @@ const TimerTab: React.FC = () => {
 
   return (
     <TimerContainer>
-      <Select
-        value={lastSelectedCategory || ''}
-        onChange={handleSelectCategory}
-        disabled={!categories.length || selectedCategory?.running}
-      >
-        <option value="" disabled>Выберите работодателя</option>
-        {categories.map(category => (
-          <option key={category.id} value={category.id}>
-            {category.name}
-          </option>
-        ))}
-      </Select>
+      <FormControl sx={{ m: 1, minWidth: 120 }}>
+        <InputLabel id="month-select-label" className="inputLabel-cust">Work</InputLabel>
+        <Select
+          labelId="category-select-label"
+          id="category-select"
+          label="Work"
+          className="select-cust"
+          value={lastSelectedCategory || ''}
+          onChange={handleSelectCategory}
+
+          disabled={!categories.length || selectedCategory?.running}
+        >
+          <MenuItem value="" disabled>Выберите работодателя</MenuItem>
+          {categories.map(category => (
+            <MenuItem key={category.id} value={category.id}>
+              {category.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
       {categories.length === 0 && <p style={{ color: '#f1f1f1' }}>Нет категорий. Добавьте в вкладке "Категории".</p>}
       {selectedCategory && (
         <CategoryItem>

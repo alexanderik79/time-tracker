@@ -52,8 +52,6 @@ export const Button = styled.button`
   }
 `;
 
-
-
 export const ResumeButton = styled(Button)`
   background-color: ${colors.primary};
   color: ${colors.text};
