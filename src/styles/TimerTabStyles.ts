@@ -59,8 +59,8 @@ export const ResumeButton = styled(Button)`
 `;
 
 export const StartButton = styled(Button)`
-  width: 160px;
-  height: 160px;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
   background-color: ${colors.primary};
   color: ${colors.text};
@@ -71,8 +71,8 @@ export const StartButton = styled(Button)`
 `;
 
 export const StopButton = styled(Button)`
-  width: 160px;
-  height: 160px;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
   background-color: ${colors.danger};
   color: ${colors.text};
