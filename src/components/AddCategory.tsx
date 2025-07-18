@@ -107,7 +107,7 @@ const AddCategory: React.FC = () => {
               </>
             ) : (
               <>
-                <CategoryName>{category.name} ({formatMoney(category.hourlyRate)}/час)</CategoryName>
+                <CategoryName>{category.name} ({formatMoney(category.hourlyRate)}/h)</CategoryName>
                 <EditButton onClick={() => handleEditClick(category)}>{t('addCategory.edit_button')}</EditButton>
                 <DeleteButton onClick={() => handleDeleteCategory(category.id)}>{t('addCategory.delete_button')}</DeleteButton>
               </>
