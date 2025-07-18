@@ -56,12 +56,22 @@ const TimerTab: React.FC = () => {
   }, [lastSelectedCategoryId, categories, dispatch, localSelectedValue]);
 
   useEffect(() => {
+    // Функция для синхронизации времени
+    const syncTimer = () => {
+      if (selectedCategory?.running && selectedCategory.startTime !== null) {
+        const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
+        setDisplayTime(elapsed);
+      } else {
+        setDisplayTime(0);
+      }
+    };
+
+    // Устанавливаем интервал для активной вкладки
     clearInterval(intervalRef.current);
     intervalRef.current = undefined;
 
     if (selectedCategory?.running && selectedCategory.startTime !== null) {
-      const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
-      setDisplayTime(elapsed);
+      syncTimer(); // Первоначальная синхронизация
       intervalRef.current = window.setInterval(() => {
         setDisplayTime(prev => prev + 1);
       }, 1000);
@@ -69,7 +79,20 @@ const TimerTab: React.FC = () => {
       setDisplayTime(0);
     }
 
-    return () => clearInterval(intervalRef.current);
+    // Обработчик события visibilitychange
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncTimer(); // Синхронизируем время при возвращении на вкладку
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Очистка при размонтировании
+    return () => {
+      clearInterval(intervalRef.current);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [selectedCategory?.id, selectedCategory?.running, selectedCategory?.startTime]);
 
   const handleSelectCategory = (e: SelectChangeEvent<string>) => {
@@ -107,7 +130,7 @@ const TimerTab: React.FC = () => {
           <MenuItem value="" disabled>{t('timer.select_employer')}</MenuItem>
           {categories.map(category => (
             <MenuItem key={category.id} value={category.id}>
-              {category.name} ({formatMoney(category.hourlyRate, currency, language)}/h)
+              {category.name} ({formatMoney(category.hourlyRate, currency, language)}/{t('timer.per_hour')})
             </MenuItem>
           ))}
         </Select>
