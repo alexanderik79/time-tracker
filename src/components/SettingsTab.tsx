@@ -3,71 +3,70 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSelector, useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import type { AppDispatch, RootState } from '../store';
 import { setSettings } from '../features/settings/settingsSlice';
 import { SettingsContainer, FormGroup, Label, Input, Select, Button } from '../styles/SettingsTabStyles';
+import i18n from '../i18n';
 
 interface SettingsFormData {
   name: string;
   phoneNumber: string;
-  // hourlyRate: number; // <--- УДАЛИТЬ ЭТУ СТРОКУ
   currency: string;
   language: string;
 }
 
 const SettingsTab: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
+  const { t } = useTranslation();
   const currentSettings = useSelector((state: RootState) => state.settings);
 
-  // Используем Omit<SettingsFormData, 'hourlyRate'>, чтобы TypeScript не ругался
-  // на отсутствие hourlyRate в currentSettings, так как мы его удалили из settingsSlice.
-  const { register, handleSubmit, reset } = useForm<Omit<SettingsFormData, 'hourlyRate'>>({
+  const { register, handleSubmit, reset } = useForm<SettingsFormData>({
     defaultValues: currentSettings,
   });
 
   useEffect(() => {
     reset(currentSettings);
+    // Синхронизируем язык i18next с Redux при загрузке
+    i18n.changeLanguage(currentSettings.language);
   }, [currentSettings, reset]);
 
-  const onSubmit = (data: Omit<SettingsFormData, 'hourlyRate'>) => { // <--- Изменено на Omit
-    dispatch(setSettings(data)); // Data теперь не содержит hourlyRate
-    alert('Настройки сохранены!');
+  const onSubmit = (data: SettingsFormData) => {
+    dispatch(setSettings(data));
+    i18n.changeLanguage(data.language); // Обновляем язык в i18next
+    alert(t('settings.saved_alert'));
   };
 
   return (
     <SettingsContainer>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FormGroup>
-          <Label htmlFor="name">Имя:</Label>
+          <Label htmlFor="name">{t('settings.name_label')}</Label>
           <Input id="name" type="text" {...register('name')} />
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="phoneNumber">Номер телефона:</Label>
+          <Label htmlFor="phoneNumber">{t('settings.phone_label')}</Label>
           <Input id="phoneNumber" type="text" {...register('phoneNumber')} />
         </FormGroup>
-        {/* <FormGroup> // <--- УДАЛИТЬ ЭТОТ БЛОК ПОЛЯ ЗАРПЛАТЫ
-          <Label htmlFor="hourlyRate">Зарплата в час:</Label>
-          <Input id="hourlyRate" type="number" step="0.01" {...register('hourlyRate', { valueAsNumber: true })} />
-        </FormGroup> */}
         <FormGroup>
-          <Label htmlFor="currency">Валюта:</Label>
+          <Label htmlFor="currency">{t('settings.currency_label')}</Label>
           <Select id="currency" {...register('currency')}>
             <option value="USD">USD</option>
             <option value="EUR">EUR</option>
             <option value="UAH">UAH</option>
-            {/* Добавьте другие валюты по желанию */}
           </Select>
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="language">Язык:</Label>
+          <Label htmlFor="language">{t('settings.language_label')}</Label>
           <Select id="language" {...register('language')}>
-            <option value="uk">Українська</option>
             <option value="en">English</option>
-            {/* Добавьте другие языки по желанию */}
+            <option value="uk">Українська</option>
+            <option value="pl">Polski</option>
+            <option value="ru">Русский</option>
           </Select>
         </FormGroup>
-        <br></br>
-        <Button type="submit">Сохранить</Button>
+        <br />
+        <Button type="submit">{t('settings.save_button')}</Button>
       </form>
     </SettingsContainer>
   );

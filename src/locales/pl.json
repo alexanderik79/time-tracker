@@ -1,6 +1,64 @@
 {
-  "timer": "Stoper",
-  "reports": "Raporty",
-  "categories": "Kategorie",
-  "settings": "Ustawienia"
+  "settings": {
+    "name_label": "Imię",
+    "phone_label": "Numer telefonu",
+    "currency_label": "Waluta",
+    "language_label": "Język",
+    "save_button": "Zapisz",
+    "saved_alert": "Ustawienia zapisane!"
+  },
+  "timer": {
+    "work_label": "Praca",
+    "select_employer": "Wybierz pracodawcę",
+    "no_categories": "Brak kategorii. Dodaj w zakładce 'Kategorie'.",
+    "total_time": "Całkowity czas dla kategorii",
+    "total_earnings": "Całkowite zarobki dla kategorii",
+    "per_hour": "godzina"
+  },
+  "addCategory": {
+    "category_name_placeholder": "Nazwa kategorii",
+    "hourly_rate_placeholder": "Stawka godzinowa",
+    "add_button": "Dodaj kategorię",
+    "edit_button": "Edytuj",
+    "delete_button": "Usuń",
+    "save_button": "Zapisz",
+    "cancel_button": "Anuluj",
+    "delete_confirm": "Czy na pewno chcesz usunąć tę kategorię i wszystkie powiązane raporty?"
+  },
+  "reports": {
+    "category_label": "Kategoria",
+    "year_label": "Rok",
+    "month_label": "Miesiąc",
+    "all_categories": "Wszystkie",
+    "no_reports": "Brak raportów za wybrany okres",
+    "category": "Kategoria",
+    "start": "Początek",
+    "end": "Koniec",
+    "duration": "Czas trwania",
+    "earnings": "Zarobki",
+    "delete_button": "Usuń",
+    "delete_confirm": "Czy na pewno chcesz usunąć ten raport?",
+    "total": "Razem",
+    "week_total": "Suma tygodniowa",
+    "month_total": "Suma miesięczna",
+    "year_total": "Suma roczna",
+    "avg_day": "Średni dzień",
+    "max_day": "Maksymalny dzień",
+    "min_day": "Minimalny dzień",
+    "forecast": "Prognoza (śr. dzień)",
+    "months": {
+      "01": "Styczeń",
+      "02": "Luty",
+      "03": "Marzec",
+      "04": "Kwiecień",
+      "05": "Maj",
+      "06": "Czerwiec",
+      "07": "Lipiec",
+      "08": "Sierpień",
+      "09": "Wrzesień",
+      "10": "Październik",
+      "11": "Listopad",
+      "12": "Grudzień"
+    }
+  }
 }

@@ -37,12 +37,14 @@ const loadState = (): TimeTrackerState => {
     }
     const state: TimeTrackerState = JSON.parse(serializedState);
     
+    // Миграция данных: добавляем hourlyRate, если отсутствует
     state.categories = state.categories.map(category => ({
       ...category,
       hourlyRate: category.hasOwnProperty('hourlyRate') ? category.hourlyRate : 0,
-      running: false,
-      paused: false,
-      startTime: null,
+      // Сохраняем running и startTime, чтобы таймер продолжался после перезагрузки
+      running: category.running || false,
+      paused: category.paused || false,
+      startTime: category.startTime || null,
     }));
     state.reports = state.reports.map(report => ({
       ...report,
@@ -156,7 +158,6 @@ const timeTrackerSlice = createSlice({
         activeCategory.running = false;
         activeCategory.paused = false;
         activeCategory.startTime = null;
-        // Убрали сброс state.lastSelectedCategory
         saveState(state);
       }
     },

@@ -2,12 +2,11 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import type { AppDispatch, RootState } from '../store';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { startTimer, stopTimer, selectCategory } from '../features/timeTracker/CategorySlice'; 
-
 import { TimerContainer, CategoryItem, TimeDisplay, StartButton, StopButton } from '../styles/TimerTabStyles';
-
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
@@ -31,6 +30,7 @@ const formatMoney = (amount: number, currency: string, language: string): string
 
 const TimerTab: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
+  const { t } = useTranslation();
   const categories = useSelector((state: RootState) => state.timeTracker?.categories || []);
   const lastSelectedCategoryId = useSelector((state: RootState) => state.timeTracker?.lastSelectedCategory || '');
   const selectedCategory = categories.find(cat => cat.id === lastSelectedCategoryId) || null;
@@ -39,30 +39,24 @@ const TimerTab: React.FC = () => {
   const { currency, language } = settings; 
 
   const [displayTime, setDisplayTime] = useState(0);
-  const intervalRef = useRef<number | undefined>(undefined);
-
-  // Локальное состояние для управления значением Material-UI Select
   const [localSelectedValue, setLocalSelectedValue] = useState<string>(lastSelectedCategoryId || '');
+  const intervalRef = useRef<number | undefined>(undefined);
 
   const earnedAmount = (displayTime / 3600) * (selectedCategory?.hourlyRate || 0);
 
-  // Effect для синхронизации локального состояния Select с Redux-стором
   useEffect(() => {
     if (lastSelectedCategoryId && lastSelectedCategoryId !== localSelectedValue) {
       setLocalSelectedValue(lastSelectedCategoryId);
     } else if (!lastSelectedCategoryId && categories.length > 0 && !localSelectedValue) {
-      // Если нет выбранной категории, но есть категории, выбираем первую
       dispatch(selectCategory(categories[0].id));
       setLocalSelectedValue(categories[0].id);
     } else if (!lastSelectedCategoryId && !categories.length && localSelectedValue) {
-      // Если категорий нет, сбрасываем
       setLocalSelectedValue('');
     }
   }, [lastSelectedCategoryId, categories, dispatch, localSelectedValue]);
 
-  // Effect для управления таймером
   useEffect(() => {
-    clearInterval(intervalRef.current); // Безопасно очищаем интервал
+    clearInterval(intervalRef.current);
     intervalRef.current = undefined;
 
     if (selectedCategory?.running && selectedCategory.startTime !== null) {
@@ -75,7 +69,7 @@ const TimerTab: React.FC = () => {
       setDisplayTime(0);
     }
 
-    return () => clearInterval(intervalRef.current); // Очистка при размонтировании
+    return () => clearInterval(intervalRef.current);
   }, [selectedCategory?.id, selectedCategory?.running, selectedCategory?.startTime]);
 
   const handleSelectCategory = (e: SelectChangeEvent<string>) => {
@@ -100,17 +94,17 @@ const TimerTab: React.FC = () => {
   return (
     <TimerContainer>
       <FormControl sx={{ m: 1, minWidth: 120 }}>
-        <InputLabel id="month-select-label" className="inputLabel-cust">Work</InputLabel>
+        <InputLabel id="month-select-label" className="inputLabel-cust">{t('timer.work_label')}</InputLabel>
         <Select
           labelId="category-select-label"
           id="category-select"
-          label="Work"
+          label={t('timer.work_label')}
           className="select-cust"
           value={localSelectedValue}
           onChange={handleSelectCategory}
           disabled={selectedCategory?.running || false}
         >
-          <MenuItem value="" disabled={true}>Выберите работодателя</MenuItem>
+          <MenuItem value="" disabled>{t('timer.select_employer')}</MenuItem>
           {categories.map(category => (
             <MenuItem key={category.id} value={category.id}>
               {category.name} ({formatMoney(category.hourlyRate, currency, language)}/час)
@@ -118,7 +112,7 @@ const TimerTab: React.FC = () => {
           ))}
         </Select>
       </FormControl>
-      {categories.length === 0 && <p style={{ color: '#f1f1f1' }}>Нет категорий. Добавьте в вкладке "Категории".</p>}
+      {categories.length === 0 && <p style={{ color: '#f1f1f1' }}>{t('timer.no_categories')}</p>}
       {localSelectedValue && (
         <CategoryItem>
           {selectedCategory?.running ? (
@@ -144,8 +138,8 @@ const TimerTab: React.FC = () => {
       )}
       {selectedCategory && (
         <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #333', color: '#f1f1f1' }}>
-          <p>Общее время по категории: {formatTime(selectedCategory.time)}</p>
-          <p>Общий заработок по категории: {formatMoney((selectedCategory.time / 3600) * (selectedCategory.hourlyRate || 0), currency, language)}</p>
+          <p>{t('timer.total_time')}: {formatTime(selectedCategory.time)}</p>
+          <p>{t('timer.total_earnings')}: {formatMoney((selectedCategory.time / 3600) * (selectedCategory.hourlyRate || 0), currency, language)}</p>
         </div>
       )}
     </TimerContainer>

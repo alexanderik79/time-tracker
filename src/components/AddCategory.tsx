@@ -1,31 +1,43 @@
+// src/components/AddCategory.tsx
+
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import type { AppDispatch, RootState } from '../store';
 import { addCategory, deleteCategory, updateCategory } from '../features/timeTracker/CategorySlice';
-// Исправленные импорты стилей: теперь EditButton импортируется из файла стилей
 import { FormContainer, Input, Button, CategoryList, CategoryItem, CategoryName, DeleteButton, EditButton } from '../styles/AddCategoryStyles';
-// import styled from 'styled-components'; // Эту строку теперь можно УДАЛИТЬ
 
 const AddCategory: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
+  const { t } = useTranslation();
   const categories = useSelector((state: RootState) => state.timeTracker.categories);
+  const { currency, language } = useSelector((state: RootState) => state.settings);
   const [categoryName, setCategoryName] = useState('');
   const [hourlyRate, setHourlyRate] = useState<number>(0);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
   const [editingHourlyRate, setEditingHourlyRate] = useState<number>(0);
 
+  const formatMoney = (amount: number): string => {
+    return new Intl.NumberFormat(language, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
     if (categoryName.trim() && hourlyRate >= 0) {
-      dispatch(addCategory({ name: categoryName.trim(), hourlyRate: hourlyRate }));
+      dispatch(addCategory({ name: categoryName.trim(), hourlyRate }));
       setCategoryName('');
       setHourlyRate(0);
     }
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (window.confirm('Вы уверены, что хотите удалить эту категорию и все связанные с ней отчёты?')) {
+    if (window.confirm(t('addCategory.delete_confirm'))) {
       dispatch(deleteCategory(id));
     }
   };
@@ -56,21 +68,21 @@ const AddCategory: React.FC = () => {
       <FormContainer onSubmit={handleAddCategory}>
         <Input
           type="text"
-          placeholder="Название категории"
+          placeholder={t('addCategory.category_name_placeholder')}
           value={categoryName}
           onChange={(e) => setCategoryName(e.target.value)}
           required
         />
         <Input
           type="number"
-          placeholder="Зарплата в час"
+          placeholder={t('addCategory.hourly_rate_placeholder')}
           value={hourlyRate === 0 ? '' : hourlyRate}
           onChange={(e) => setHourlyRate(parseFloat(e.target.value) || 0)}
           step="0.01"
           min="0"
           required
         />
-        <Button type="submit">Добавить категорию</Button>
+        <Button type="submit">{t('addCategory.add_button')}</Button>
       </FormContainer>
 
       <CategoryList>
@@ -86,18 +98,18 @@ const AddCategory: React.FC = () => {
                 <Input
                   type="number"
                   value={editingHourlyRate}
-                  onChange={(e) => setEditingHourlyRate(parseFloat(e.target.value))}
+                  onChange={(e) => setEditingHourlyRate(parseFloat(e.target.value) || 0)}
                   step="0.01"
                   min="0"
                 />
-                <Button onClick={handleSaveEdit}>Сохранить</Button>
-                <DeleteButton onClick={handleCancelEdit}>Отмена</DeleteButton>
+                <Button onClick={handleSaveEdit}>{t('addCategory.save_button')}</Button>
+                <DeleteButton onClick={handleCancelEdit}>{t('addCategory.cancel_button')}</DeleteButton>
               </>
             ) : (
               <>
-                <CategoryName>{category.name} ({category.hourlyRate} за час)</CategoryName>
-                <EditButton onClick={() => handleEditClick(category)}>Редактировать</EditButton>
-                <DeleteButton onClick={() => handleDeleteCategory(category.id)}>Удалить</DeleteButton>
+                <CategoryName>{category.name} ({formatMoney(category.hourlyRate)}/час)</CategoryName>
+                <EditButton onClick={() => handleEditClick(category)}>{t('addCategory.edit_button')}</EditButton>
+                <DeleteButton onClick={() => handleDeleteCategory(category.id)}>{t('addCategory.delete_button')}</DeleteButton>
               </>
             )}
           </CategoryItem>
