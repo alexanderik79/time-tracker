@@ -1,3 +1,5 @@
+// src/styles/AddCategoryStyles.ts
+
 import styled from 'styled-components';
 import { colors } from './GlobalStyles';
 
@@ -61,4 +63,14 @@ export const CategoryName = styled.span`
 export const DeleteButton = styled(Button)`
   background-color: ${colors.danger};
   color: ${colors.text};
+`;
+
+// НОВЫЙ СТИЛИЗОВАННЫЙ КОМПОНЕНТ EditButton
+export const EditButton = styled(Button)`
+  background-color: #007bff; /* Примерный синий цвет */
+  color: white;
+  margin-left: 8px; /* Небольшой отступ от CategoryName */
+  &:hover {
+    background-color: #0056b3;
+  }
 `;

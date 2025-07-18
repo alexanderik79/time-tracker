@@ -5,12 +5,12 @@ import { useForm } from 'react-hook-form';
 import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '../store';
 import { setSettings } from '../features/settings/settingsSlice';
-import { SettingsContainer, FormGroup, Label, Input, Select, Button } from '../styles/SettingsTabStyles'; // <--- Импортируем стилизованные компоненты
+import { SettingsContainer, FormGroup, Label, Input, Select, Button } from '../styles/SettingsTabStyles';
 
 interface SettingsFormData {
   name: string;
   phoneNumber: string;
-  hourlyRate: number;
+  // hourlyRate: number; // <--- УДАЛИТЬ ЭТУ СТРОКУ
   currency: string;
   language: string;
 }
@@ -19,7 +19,9 @@ const SettingsTab: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const currentSettings = useSelector((state: RootState) => state.settings);
 
-  const { register, handleSubmit, reset } = useForm<SettingsFormData>({
+  // Используем Omit<SettingsFormData, 'hourlyRate'>, чтобы TypeScript не ругался
+  // на отсутствие hourlyRate в currentSettings, так как мы его удалили из settingsSlice.
+  const { register, handleSubmit, reset } = useForm<Omit<SettingsFormData, 'hourlyRate'>>({
     defaultValues: currentSettings,
   });
 
@@ -27,29 +29,29 @@ const SettingsTab: React.FC = () => {
     reset(currentSettings);
   }, [currentSettings, reset]);
 
-  const onSubmit = (data: SettingsFormData) => {
-    dispatch(setSettings(data));
+  const onSubmit = (data: Omit<SettingsFormData, 'hourlyRate'>) => { // <--- Изменено на Omit
+    dispatch(setSettings(data)); // Data теперь не содержит hourlyRate
     alert('Настройки сохранены!');
   };
 
   return (
-    <SettingsContainer> {/* <--- Используем стилизованный контейнер */}
+    <SettingsContainer>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FormGroup> {/* <--- Используем стилизованную группу формы */}
-          <Label htmlFor="name">Имя:</Label> {/* <--- Используем стилизованный лейбл */}
-          <Input id="name" type="text" {...register('name')} /> {/* <--- Используем стилизованный инпут */}
+        <FormGroup>
+          <Label htmlFor="name">Имя:</Label>
+          <Input id="name" type="text" {...register('name')} />
         </FormGroup>
         <FormGroup>
           <Label htmlFor="phoneNumber">Номер телефона:</Label>
           <Input id="phoneNumber" type="text" {...register('phoneNumber')} />
         </FormGroup>
-        <FormGroup>
+        {/* <FormGroup> // <--- УДАЛИТЬ ЭТОТ БЛОК ПОЛЯ ЗАРПЛАТЫ
           <Label htmlFor="hourlyRate">Зарплата в час:</Label>
           <Input id="hourlyRate" type="number" step="0.01" {...register('hourlyRate', { valueAsNumber: true })} />
-        </FormGroup>
+        </FormGroup> */}
         <FormGroup>
           <Label htmlFor="currency">Валюта:</Label>
-          <Select id="currency" {...register('currency')}> {/* <--- Используем стилизованный селект */}
+          <Select id="currency" {...register('currency')}>
             <option value="USD">USD</option>
             <option value="EUR">EUR</option>
             <option value="UAH">UAH</option>
@@ -65,7 +67,7 @@ const SettingsTab: React.FC = () => {
           </Select>
         </FormGroup>
         <br></br>
-        <Button type="submit">Сохранить</Button> {/* <--- Используем стилизованную кнопку */}
+        <Button type="submit">Сохранить</Button>
       </form>
     </SettingsContainer>
   );

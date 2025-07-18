@@ -4,8 +4,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '../store';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import { startTimer, stopTimer, updateTime, syncTime, selectCategory } from '../features/timeTracker/CategorySlice';
-import { TimerContainer, CategoryItem, TimeDisplay, StartButton, StopButton } from '../styles/TimerTabStyles'; // Import the updated styled components
+import { startTimer, stopTimer, selectCategory } from '../features/timeTracker/CategorySlice'; 
+
+import { TimerContainer, CategoryItem, TimeDisplay, StartButton, StopButton } from '../styles/TimerTabStyles';
 
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -32,26 +33,47 @@ const formatMoney = (amount: number, currency: string, language: string): string
 const TimerTab: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const categories = useSelector((state: RootState) => state.timeTracker?.categories || []);
-  const lastSelectedCategory = useSelector((state: RootState) => state.timeTracker?.lastSelectedCategory || null);
-  const selectedCategory = categories.find(cat => cat.id === lastSelectedCategory);
+  const lastSelectedCategoryId = useSelector((state: RootState) => state.timeTracker?.lastSelectedCategory || null);
+  const selectedCategory = categories.find(cat => cat.id === lastSelectedCategoryId);
   
   const settings = useSelector((state: RootState) => state.settings);
-  const { hourlyRate, currency, language } = settings;
+  const { currency, language } = settings; 
 
   const [displayTime, setDisplayTime] = useState(0);
   const intervalRef = useRef<number | null>(null);
 
-  const earnedAmount = (displayTime / 3600) * hourlyRate;
+  // Добавляем локальное состояние для управления значением Material-UI Select
+  const [localSelectedValue, setLocalSelectedValue] = useState<string>(lastSelectedCategoryId || '');
+
+  const earnedAmount = (displayTime / 3600) * (selectedCategory?.hourlyRate || 0);
+
+  // Effect для синхронизации локального состояния Select с Redux-стором
+  useEffect(() => {
+    if (lastSelectedCategoryId && lastSelectedCategoryId !== localSelectedValue) {
+      setLocalSelectedValue(lastSelectedCategoryId);
+    } else if (!lastSelectedCategoryId && categories.length > 0 && !localSelectedValue) {
+      // Если нет выбранной категории, но есть категории, выбираем первую
+      dispatch(selectCategory(categories[0].id));
+      setLocalSelectedValue(categories[0].id);
+    } else if (!lastSelectedCategoryId && !categories.length && localSelectedValue) {
+      // Если категорий нет, но локально что-то выбрано, сбрасываем
+      setLocalSelectedValue('');
+    }
+  }, [lastSelectedCategoryId, categories, dispatch, localSelectedValue]);
+
 
   useEffect(() => {
-    dispatch(syncTime());
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
     if (selectedCategory) {
-      setDisplayTime(selectedCategory.time);
-      if (selectedCategory.running && selectedCategory.startTime) {
+      if (selectedCategory.running && selectedCategory.startTime !== null) {
         const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
-        setDisplayTime(selectedCategory.time + elapsed);
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        intervalRef.current = setInterval(() => {
+        setDisplayTime(elapsed);
+        
+        intervalRef.current = window.setInterval(() => {
           setDisplayTime(prev => prev + 1);
         }, 1000);
       } else {
@@ -59,18 +81,28 @@ const TimerTab: React.FC = () => {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
         }
-        setDisplayTime(selectedCategory.time);
+        setDisplayTime(0); // ОБНУЛЕНИЕ счетчика, когда таймер неактивен
       }
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setDisplayTime(0);
     }
+
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, [dispatch, selectedCategory?.id, selectedCategory?.running, selectedCategory?.time]);
+  }, [selectedCategory?.id, selectedCategory?.running, selectedCategory?.startTime]);
 
   const handleSelectCategory = (e: SelectChangeEvent<string>) => {
-    if (selectedCategory?.running && selectedCategory.startTime) {
-      dispatch(updateTime({ id: selectedCategory.id }));
-    }
+    // Обновляем локальное состояние Select
+    setLocalSelectedValue(e.target.value);
+    // И отправляем в Redux-стор
     dispatch(selectCategory(e.target.value));
   };
 
@@ -78,24 +110,13 @@ const TimerTab: React.FC = () => {
     if (selectedCategory) {
       dispatch(startTimer(selectedCategory.id));
       setDisplayTime(0);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      intervalRef.current = setInterval(() => {
-        setDisplayTime(prev => prev + 1);
-      }, 1000);
     }
   };
 
   const handleStop = () => {
-    if (selectedCategory && (selectedCategory.running || selectedCategory.paused)) {
-      if (selectedCategory.running && selectedCategory.startTime) {
-        dispatch(updateTime({ id: selectedCategory.id }));
-      }
-      dispatch(stopTimer(selectedCategory.id));
-      setDisplayTime(0);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+    if (selectedCategory) {
+      dispatch(stopTimer());
+      setDisplayTime(0); 
     }
   };
 
@@ -108,14 +129,15 @@ const TimerTab: React.FC = () => {
           id="category-select"
           label="Work"
           className="select-cust"
-          value={lastSelectedCategory || ''}
+          value={localSelectedValue} // !!! Используем локальное состояние здесь !!!
           onChange={handleSelectCategory}
-          disabled={!categories.length || selectedCategory?.running}
+          // Отключаем селектор только если ТЕКУЩАЯ выбранная категория запущена
+          disabled={selectedCategory?.running || false} 
         >
-          <MenuItem value="" disabled>Выберите работодателя</MenuItem>
+          <MenuItem value="" disabled={true}>Выберите работодателя</MenuItem> {/* Disabled здесь, чтобы нельзя было выбрать "пусто" */}
           {categories.map(category => (
             <MenuItem key={category.id} value={category.id}>
-              {category.name}
+              {category.name} ({formatMoney(category.hourlyRate, currency, language)}/час)
             </MenuItem>
           ))}
         </Select>
@@ -123,29 +145,32 @@ const TimerTab: React.FC = () => {
       {categories.length === 0 && <p style={{ color: '#f1f1f1' }}>Нет категорий. Добавьте в вкладке "Категории".</p>}
       {selectedCategory && (
         <CategoryItem>
-          {/* We've already set flex-direction: column on StartButton/StopButton */}
-          {/* and display: block on TimeDisplay, so they'll stack automatically. */}
-          {/* We can remove the redundant <div> wrapper here. */}
           {!selectedCategory.running && !selectedCategory.paused ? (
             <StartButton onClick={handleStart}>
               <TimeDisplay running={selectedCategory.running.toString()}>
-                {formatTime(selectedCategory.time)}
+                 {formatTime(displayTime)}
               </TimeDisplay>
-              <span style={{ fontSize: '1.2rem', color: '#f1f1f1' /* Removed marginTop here */ }}>
-                  {formatMoney((selectedCategory.time / 3600) * hourlyRate, currency, language)}
+              <span style={{ fontSize: '1.2rem', color: '#f1f1f1' }}>
+                  {formatMoney(earnedAmount, currency, language)}
               </span>
             </StartButton>
           ) : (
             <StopButton onClick={handleStop}>
               <TimeDisplay running={selectedCategory.running.toString()}>
-                {formatTime(selectedCategory.running ? displayTime : selectedCategory.time)}
+                 {formatTime(displayTime)}
               </TimeDisplay>
-              <span style={{ fontSize: '1.2rem', color: '#f1f1f1' /* Removed marginTop here */ }}>
+              <span style={{ fontSize: '1.2rem', color: '#f1f1f1' }}>
                   {formatMoney(earnedAmount, currency, language)}
               </span>
             </StopButton>
           )}
         </CategoryItem>
+      )}
+      {selectedCategory && (
+        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #333', color: '#f1f1f1' }}>
+          <p>Общее время по категории: {formatTime(selectedCategory.time)}</p>
+          <p>Общий заработок по категории: {formatMoney((selectedCategory.time / 3600) * (selectedCategory.hourlyRate || 0), currency, language)}</p>
+        </div>
       )}
     </TimerContainer>
   );

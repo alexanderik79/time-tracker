@@ -3,47 +3,43 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-// 1. Определите интерфейс для состояния настроек
 interface SettingsState {
   name: string;
   phoneNumber: string;
-  hourlyRate: number;
+  // hourlyRate: number; // <--- УДАЛИТЬ ЭТУ СТРОКУ
   currency: string;
   language: string;
 }
 
-// 2. Определите функцию для загрузки настроек из localStorage
 const loadSettingsFromLocalStorage = (): SettingsState => {
   try {
-    const serializedSettings = localStorage.getItem('appSettings'); // Используйте уникальный ключ
+    const serializedSettings = localStorage.getItem('appSettings');
     if (serializedSettings === null) {
-      // Возвращаем дефолтные значения, если настроек нет
       return {
         name: '',
         phoneNumber: '',
-        hourlyRate: 0,
-        currency: 'USD', // Или 'RUB', 'EUR' по умолчанию
-        language: 'ru',  // Или 'en' по умолчанию
+        // hourlyRate: 0, // <--- УДАЛИТЬ ЭТУ СТРОКУ
+        currency: 'USD',
+        language: 'ru',
       };
     }
-    return JSON.parse(serializedSettings);
+    const settings = JSON.parse(serializedSettings);
+    // Убедитесь, что hourlyRate не попадет сюда, если он был в старых данных localStorage
+    delete settings.hourlyRate;
+    return settings;
   } catch (e) {
     console.warn('Failed to load settings from localStorage:', e);
-    // В случае ошибки также возвращаем дефолтные значения
     return {
       name: '',
       phoneNumber: '',
-      hourlyRate: 0,
       currency: 'USD',
       language: 'ru',
     };
   }
 };
 
-// 3. Начальное состояние
 const initialState: SettingsState = loadSettingsFromLocalStorage();
 
-// 4. Функция для сохранения настроек в localStorage
 const saveSettingsToLocalStorage = (settings: SettingsState) => {
   try {
     localStorage.setItem('appSettings', JSON.stringify(settings));
@@ -52,28 +48,20 @@ const saveSettingsToLocalStorage = (settings: SettingsState) => {
   }
 };
 
-// 5. Создайте слайс
 const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    // Определите редьюсер для сохранения настроек
-    // Он будет принимать новый объект настроек и обновлять состояние
     setSettings: (state, action: PayloadAction<SettingsState>) => {
-      // Здесь вы можете просто присвоить новое состояние
-      // Redux Toolkit использует Immer, так что прямое изменение 'state' безопасно
       state.name = action.payload.name;
       state.phoneNumber = action.payload.phoneNumber;
-      state.hourlyRate = action.payload.hourlyRate;
+      // state.hourlyRate = action.payload.hourlyRate; // <--- УДАЛИТЬ ЭТУ СТРОКУ
       state.currency = action.payload.currency;
       state.language = action.payload.language;
-      saveSettingsToLocalStorage(state); // Сохраняем после обновления
+      saveSettingsToLocalStorage(state);
     },
-    // Можно добавить отдельные редьюсеры для каждого поля, если это потребуется
-    // Например: setUserName: (state, action: PayloadAction<string>) => { state.name = action.payload; saveSettingsToLocalStorage(state); }
   },
 });
 
-// 6. Экспортируйте экшены и редьюсер
-export const { setSettings } = settingsSlice.actions; // Экшен для обновления всех настроек
+export const { setSettings } = settingsSlice.actions;
 export default settingsSlice.reducer;
