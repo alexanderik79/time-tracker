@@ -21,28 +21,27 @@ const formatTime = (seconds: number): string => {
 };
 
 const formatMoney = (amount: number, currency: string, language: string): string => {
-    return new Intl.NumberFormat(language, {
-        style: 'currency',
-        currency: currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(amount);
+  return new Intl.NumberFormat(language, {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
 };
-
 
 const TimerTab: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const categories = useSelector((state: RootState) => state.timeTracker?.categories || []);
-  const lastSelectedCategoryId = useSelector((state: RootState) => state.timeTracker?.lastSelectedCategory || null);
-  const selectedCategory = categories.find(cat => cat.id === lastSelectedCategoryId);
+  const lastSelectedCategoryId = useSelector((state: RootState) => state.timeTracker?.lastSelectedCategory || '');
+  const selectedCategory = categories.find(cat => cat.id === lastSelectedCategoryId) || null;
   
   const settings = useSelector((state: RootState) => state.settings);
   const { currency, language } = settings; 
 
   const [displayTime, setDisplayTime] = useState(0);
-  const intervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<number | undefined>(undefined);
 
-  // Добавляем локальное состояние для управления значением Material-UI Select
+  // Локальное состояние для управления значением Material-UI Select
   const [localSelectedValue, setLocalSelectedValue] = useState<string>(lastSelectedCategoryId || '');
 
   const earnedAmount = (displayTime / 3600) * (selectedCategory?.hourlyRate || 0);
@@ -56,53 +55,31 @@ const TimerTab: React.FC = () => {
       dispatch(selectCategory(categories[0].id));
       setLocalSelectedValue(categories[0].id);
     } else if (!lastSelectedCategoryId && !categories.length && localSelectedValue) {
-      // Если категорий нет, но локально что-то выбрано, сбрасываем
+      // Если категорий нет, сбрасываем
       setLocalSelectedValue('');
     }
   }, [lastSelectedCategoryId, categories, dispatch, localSelectedValue]);
 
-
+  // Effect для управления таймером
   useEffect(() => {
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    clearInterval(intervalRef.current); // Безопасно очищаем интервал
+    intervalRef.current = undefined;
 
-    if (selectedCategory) {
-      if (selectedCategory.running && selectedCategory.startTime !== null) {
-        const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
-        setDisplayTime(elapsed);
-        
-        intervalRef.current = window.setInterval(() => {
-          setDisplayTime(prev => prev + 1);
-        }, 1000);
-      } else {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        setDisplayTime(0); // ОБНУЛЕНИЕ счетчика, когда таймер неактивен
-      }
+    if (selectedCategory?.running && selectedCategory.startTime !== null) {
+      const elapsed = Math.floor((Date.now() - selectedCategory.startTime) / 1000);
+      setDisplayTime(elapsed);
+      intervalRef.current = window.setInterval(() => {
+        setDisplayTime(prev => prev + 1);
+      }, 1000);
     } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
       setDisplayTime(0);
     }
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
+    return () => clearInterval(intervalRef.current); // Очистка при размонтировании
   }, [selectedCategory?.id, selectedCategory?.running, selectedCategory?.startTime]);
 
   const handleSelectCategory = (e: SelectChangeEvent<string>) => {
-    // Обновляем локальное состояние Select
     setLocalSelectedValue(e.target.value);
-    // И отправляем в Redux-стор
     dispatch(selectCategory(e.target.value));
   };
 
@@ -129,12 +106,11 @@ const TimerTab: React.FC = () => {
           id="category-select"
           label="Work"
           className="select-cust"
-          value={localSelectedValue} // !!! Используем локальное состояние здесь !!!
+          value={localSelectedValue}
           onChange={handleSelectCategory}
-          // Отключаем селектор только если ТЕКУЩАЯ выбранная категория запущена
-          disabled={selectedCategory?.running || false} 
+          disabled={selectedCategory?.running || false}
         >
-          <MenuItem value="" disabled={true}>Выберите работодателя</MenuItem> {/* Disabled здесь, чтобы нельзя было выбрать "пусто" */}
+          <MenuItem value="" disabled={true}>Выберите работодателя</MenuItem>
           {categories.map(category => (
             <MenuItem key={category.id} value={category.id}>
               {category.name} ({formatMoney(category.hourlyRate, currency, language)}/час)
@@ -143,26 +119,26 @@ const TimerTab: React.FC = () => {
         </Select>
       </FormControl>
       {categories.length === 0 && <p style={{ color: '#f1f1f1' }}>Нет категорий. Добавьте в вкладке "Категории".</p>}
-      {selectedCategory && (
+      {localSelectedValue && (
         <CategoryItem>
-          {!selectedCategory.running && !selectedCategory.paused ? (
-            <StartButton onClick={handleStart}>
-              <TimeDisplay running={selectedCategory.running.toString()}>
-                 {formatTime(displayTime)}
-              </TimeDisplay>
-              <span style={{ fontSize: '1.2rem', color: '#f1f1f1' }}>
-                  {formatMoney(earnedAmount, currency, language)}
-              </span>
-            </StartButton>
-          ) : (
+          {selectedCategory?.running ? (
             <StopButton onClick={handleStop}>
               <TimeDisplay running={selectedCategory.running.toString()}>
-                 {formatTime(displayTime)}
+                {formatTime(displayTime)}
               </TimeDisplay>
               <span style={{ fontSize: '1.2rem', color: '#f1f1f1' }}>
-                  {formatMoney(earnedAmount, currency, language)}
+                {formatMoney(earnedAmount, currency, language)}
               </span>
             </StopButton>
+          ) : (
+            <StartButton onClick={handleStart} disabled={!selectedCategory}>
+              <TimeDisplay running={selectedCategory?.running.toString() || 'false'}>
+                {formatTime(displayTime)}
+              </TimeDisplay>
+              <span style={{ fontSize: '1.2rem', color: '#f1f1f1' }}>
+                {formatMoney(earnedAmount, currency, language)}
+              </span>
+            </StartButton>
           )}
         </CategoryItem>
       )}
