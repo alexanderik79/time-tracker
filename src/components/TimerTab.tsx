@@ -107,7 +107,7 @@ const TimerTab: React.FC = () => {
           <MenuItem value="" disabled>{t('timer.select_employer')}</MenuItem>
           {categories.map(category => (
             <MenuItem key={category.id} value={category.id}>
-              {category.name} ({formatMoney(category.hourlyRate, currency, language)}/час)
+              {category.name} ({formatMoney(category.hourlyRate, currency, language)}/h)
             </MenuItem>
           ))}
         </Select>
